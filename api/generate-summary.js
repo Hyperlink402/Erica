@@ -25,66 +25,96 @@ export default async function handler(req, res) {
     ]
   `;
 
-  // Simple in-memory cooldown guard to reduce rapid repeated calls from clients.
-  // Note: Serverless functions are ephemeral and this is a best-effort protection.
-  // It helps reduce quick client-side loops that trigger Gemini rate limits.
+  // Configurable cooldown (ms). 기본 15초로 설정되어 있으나 필요 시 환경변수로 조정 가능.
+  const COOLDOWN_MS = Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 15_000;
+
+  // Initialize globals for best-effort concurrency control in serverless env
   if (!global._generateSummaryLastRequestAt) global._generateSummaryLastRequestAt = 0;
-  const COOLDOWN_MS = 15000; // 15s cooldown between allowed requests (tunable)
+  if (typeof global._generateSummaryInFlight === 'undefined') global._generateSummaryInFlight = false;
+
   const now = Date.now();
+
+  // If another request is currently in-flight, immediately return a friendly 429
+  if (global._generateSummaryInFlight) {
+    const retryAfterSeconds = 5;
+    res.setHeader('Retry-After', String(retryAfterSeconds));
+    return res.status(429).json({ error: '다른 요청이 처리 중입니다. 잠시 후 다시 시도해 주세요.' });
+  }
+
+  // Enforce cooldown since last successful (or rate-limited) request
   if (now - global._generateSummaryLastRequestAt < COOLDOWN_MS) {
     const retryAfterSec = Math.ceil((COOLDOWN_MS - (now - global._generateSummaryLastRequestAt)) / 1000);
     res.setHeader('Retry-After', String(retryAfterSec));
-    return res.status(429).json({ error: `Too many requests. Please wait ${retryAfterSec} seconds before retrying.` });
+    return res.status(429).json({ error: `요청이 너무 잦습니다. ${retryAfterSec}초 후에 다시 시도해 주세요.` });
   }
 
   try {
-    // mark the request time immediately to help prevent parallel rapid requests
-    global._generateSummaryLastRequestAt = Date.now();
+    // mark in-flight to prevent concurrent Gemini calls
+    global._generateSummaryInFlight = true;
 
-    const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }]
-        // NOTE: removed `tools` to avoid using features that might not be supported for all accounts.
-      })
-    });
+    const apiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+          // tools omitted intentionally
+        })
+      }
+    );
+
+    // read body as text to handle non-JSON error payloads
+    const rawBodyText = await apiResponse.text();
 
     if (!apiResponse.ok) {
-      const errorText = await apiResponse.text();
-
-      // If Gemini returns 429, propagate it and include Retry-After header when present
+      // If Gemini returns 429, propagate and record last request time to avoid immediate retrigger
       if (apiResponse.status === 429) {
         const retryAfterHeader = apiResponse.headers.get('retry-after');
         if (retryAfterHeader) res.setHeader('Retry-After', retryAfterHeader);
-        return res.status(429).json({ error: `Gemini API Rate Limit (429): ${errorText}` });
+
+        // record last request time so subsequent callers hit cooldown
+        global._generateSummaryLastRequestAt = Date.now();
+
+        return res.status(429).json({ error: `Gemini API Rate Limit (429): ${rawBodyText}` });
       }
 
-      return res.status(apiResponse.status).json({ 
-        error: `Gemini API 오류 (${apiResponse.status}): ${errorText}` 
+      // Other non-OK responses: forward status and message
+      return res.status(apiResponse.status).json({
+        error: `Gemini API 오류 (${apiResponse.status}): ${rawBodyText}`
       });
     }
 
-    const data = await apiResponse.json();
+    // success: parse json
+    const data = JSON.parse(rawBodyText);
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
     const jsonMatch = rawText ? rawText.match(/\[[\s\S]*\]/) : null;
     if (!jsonMatch) {
-      return res.status(500).json({ 
+      // record last request time to avoid immediate retry loops
+      global._generateSummaryLastRequestAt = Date.now();
+      return res.status(500).json({
         error: 'Gemini API로부터 올바른 JSON 형식의 응답을 받지 못했습니다.',
-        rawText 
+        rawText
       });
     }
 
     const newsItems = JSON.parse(jsonMatch[0]);
-    return res.status(200).json(newsItems);
 
+    // successful response: record last success time (enable cooldown)
+    global._generateSummaryLastRequestAt = Date.now();
+
+    return res.status(200).json(newsItems);
   } catch (error) {
     console.error('Serverless Function Error:', error);
 
-    // If the error looks like a fetch failure to Gemini, respond with 502/503 rather than retrying.
-    return res.status(502).json({ 
-      error: error.message || '서버 내부 오류가 발생했습니다.' 
+    // on unexpected error, record last request time to reduce rapid retries
+    global._generateSummaryLastRequestAt = Date.now();
+
+    return res.status(502).json({
+      error: error?.message || '서버 내부 오류가 발생했습니다.'
     });
+  } finally {
+    // always clear in-flight flag so next requests can proceed
+    global._generateSummaryInFlight = false;
   }
 }
