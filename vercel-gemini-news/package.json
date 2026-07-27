@@ -1,9 +1,0 @@
-{
-  "name": "vercel-gemini-news",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Gemini API를 활용한 실시간 AI 뉴스 브리핑 웹 애플리케이션",
-  "scripts": {
-    "dev": "vercel dev"
-  }
-}
