@@ -10,23 +10,8 @@ export default async function handler(req, res) {
     });
   }
 
-  const promptText = `
-    현재 한국 주요 뉴스 4건을 조사해줘.
-    결과는 설명 없이 오직 아래 JSON 배열 형식으로만 응답해줘.
-
-    [
-      {
-        "id": 1,
-        "category": "카테고리",
-        "title": "뉴스 제목",
-        "summary": "1~2줄 핵심 요약",
-        "details": "구체적인 맥락 설명",
-        "sources": [
-          { "name": "언론사명", "url": "원문기사URL" }
-        ]
-      }
-    ]
-  `;
+  const promptText = `한국 주요 뉴스 4건을 JSON 형식으로:
+[{"id":1,"category":"","title":"","summary":"","details":"","sources":[{"name":"","url":""}]}]`;;
 
   try {
     const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
