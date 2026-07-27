@@ -34,7 +34,7 @@ export default async function handler(req, res) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
-        //tools: [{ googleSearch: {} }]
+        tools: [{ googleSearch: {} }]
       })
     });
 
