@@ -1,0 +1,28 @@
+/* poker card 비율 스타일 오버라이드 */
+.news-list {
+  align-items: center;
+}
+
+.news-card {
+  aspect-ratio: 5 / 7;
+  width: min(100%, 420px);
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 320px;
+}
+
+.news-detail-wrapper {
+  max-height: 0;
+  overflow-y: auto;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+}
+
+.news-card.active .news-detail-wrapper {
+  max-height: calc(100% - 180px);
+  transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
+}
+
+.news-header {
+  min-height: 180px;
+}
