@@ -1,61 +1,116 @@
 /* poker card 비율 스타일 오버라이드 */
 body {
+  overflow: hidden;
   scroll-behavior: smooth;
 }
 
-body .container .news-list {
+.container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 40px 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding-block: 100px;
+  justify-content: flex-start;
+  height: 100vh;
+  overflow: hidden;
 }
 
-body .container .news-list::before,
-body .container .news-list::after {
-  content: "";
-  display: block;
-  height: 36px;
+.news-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: calc(100vh - 160px);
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
-body .container .news-list .news-card {
+.news-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.news-list::-webkit-scrollbar-thumb {
+  background: rgba(37, 99, 235, 0.35);
+  border-radius: 999px;
+}
+
+.news-card {
   aspect-ratio: 5 / 7;
-  width: min(100%, 420px);
-  margin-top: -130px;
-  margin-inline: auto;
+  width: 100%;
+  min-height: 320px;
+  margin: 0 auto;
   display: grid;
   grid-template-rows: auto 1fr;
-  min-height: 320px;
-  position: sticky;
-  top: 80px;
-  transition: transform 0.35s ease, box-shadow 0.35s ease, opacity 0.35s ease;
+  background-color: white;
+  transition: transform 0.45s ease, opacity 0.45s ease, box-shadow 0.35s ease;
+  opacity: 0;
+  transform: translateY(-40px);
+  animation: fly-in 0.55s ease forwards;
   will-change: transform, opacity;
-  z-index: 1;
 }
 
-body .container .news-list .news-card:first-child {
-  margin-top: 0;
+.news-card:nth-child(1) {
+  animation-delay: 0.1s;
 }
 
-body .container .news-list .news-card:hover {
-  transform: translateY(-3px);
+.news-card:nth-child(2) {
+  animation-delay: 0.22s;
 }
 
-body .container .news-list .news-card:nth-child(n+2) {
-  opacity: 0.96;
+.news-card:nth-child(3) {
+  animation-delay: 0.34s;
 }
 
-body .container .news-list .news-card .news-detail-wrapper {
+.news-card:nth-child(4) {
+  animation-delay: 0.46s;
+}
+
+.news-card:nth-child(5) {
+  animation-delay: 0.58s;
+}
+
+.news-card:nth-child(6) {
+  animation-delay: 0.70s;
+}
+
+.news-card:nth-child(7) {
+  animation-delay: 0.82s;
+}
+
+.news-card:nth-child(8) {
+  animation-delay: 0.94s;
+}
+
+.news-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.12);
+}
+
+.news-detail-wrapper {
   max-height: 0;
   overflow-y: auto;
   transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
 }
 
-body .container .news-list .news-card.active .news-detail-wrapper {
+.news-card.active .news-detail-wrapper {
   max-height: calc(100% - 180px);
   transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
 }
 
-body .container .news-list .news-card .news-header {
+.news-header {
   min-height: 180px;
+}
+
+@keyframes fly-in {
+  from {
+    opacity: 0;
+    transform: translateY(-60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
