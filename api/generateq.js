@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+/*export default async function handler(req, res) {
   // 테스트용 목업 데이터 반환 (Gemini API를 호출하지 않으므로 에러 0%)
   const mockNews = [
     {
