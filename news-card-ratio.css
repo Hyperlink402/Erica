@@ -1,28 +1,61 @@
 /* poker card 비율 스타일 오버라이드 */
-.news-list {
-  align-items: center;
+body {
+  scroll-behavior: smooth;
 }
 
-.news-card {
+body .container .news-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding-block: 100px;
+}
+
+body .container .news-list::before,
+body .container .news-list::after {
+  content: "";
+  display: block;
+  height: 36px;
+}
+
+body .container .news-list .news-card {
   aspect-ratio: 5 / 7;
   width: min(100%, 420px);
+  margin-top: -130px;
   margin-inline: auto;
   display: grid;
   grid-template-rows: auto 1fr;
   min-height: 320px;
+  position: sticky;
+  top: 80px;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, opacity 0.35s ease;
+  will-change: transform, opacity;
+  z-index: 1;
 }
 
-.news-detail-wrapper {
+body .container .news-list .news-card:first-child {
+  margin-top: 0;
+}
+
+body .container .news-list .news-card:hover {
+  transform: translateY(-3px);
+}
+
+body .container .news-list .news-card:nth-child(n+2) {
+  opacity: 0.96;
+}
+
+body .container .news-list .news-card .news-detail-wrapper {
   max-height: 0;
   overflow-y: auto;
   transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
 }
 
-.news-card.active .news-detail-wrapper {
+body .container .news-list .news-card.active .news-detail-wrapper {
   max-height: calc(100% - 180px);
   transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
 }
 
-.news-header {
+body .container .news-list .news-card .news-header {
   min-height: 180px;
 }
