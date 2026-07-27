@@ -267,6 +267,22 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .detail-loading {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .detail-loading .spinner {
+      width: 24px;
+      height: 24px;
+      margin: 0 auto 8px;
+    }
+
+    .detail-loading p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -291,25 +307,25 @@
   <script>
     const newsContainer = document.getElementById('newsContainer');
     const refreshBtn = document.getElementById('refreshBtn');
+    let newsData = [];
 
-    async function fetchAndSummarizeNews() {
+    // 요약만 먼저 로드
+    async function fetchNewsSummaries() {
       showLoading();
       refreshBtn.disabled = true;
 
       try {
-        const response = await fetch('/api/generate');
-
+        const response = await fetch('/api/generate-summary');
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
           throw new Error(errData.error || `서버 에러가 발생했습니다. (Status: ${response.status})`);
         }
-
-        const newsItems = await response.json();
-        renderNewsCards(newsItems);
-
+        
+        newsData = await response.json();
+        renderNewsCards(newsData);
       } catch (error) {
-        console.error("News Fetch Error:", error);
-        showError(error.message || "실시간 뉴스를 가져오는 중 오류가 발생했습니다.");
+        console.error("Error:", error);
+        showError(error.message);
       } finally {
         refreshBtn.disabled = false;
       }
@@ -327,10 +343,6 @@
         const card = document.createElement('div');
         card.className = 'news-card';
 
-        const sourcesHtml = item.sources && item.sources.length > 0
-          ? item.sources.map(src => `<a href="${src.url}" target="_blank" rel="noopener noreferrer" class="source-chip">🔗 ${src.name}</a>`).join('')
-          : '<span style="font-size:0.8rem; color:var(--text-muted);">출처 정보 없음</span>';
-
         card.innerHTML = `
           <div class="news-header">
             <div class="news-main-info">
@@ -346,21 +358,58 @@
           </div>
           <div class="news-detail-wrapper">
             <div class="news-detail-content">
-              <h4>상세 브리핑</h4>
-              <p class="detail-text">${item.details}</p>
-              <div class="source-section">
-                <h4>기사 출처</h4>
-                <div class="source-list">
-                  ${sourcesHtml}
-                </div>
+              <div class="detail-loading">
+                <div class="spinner"></div>
+                <p>상세 정보 로드 중...</p>
               </div>
             </div>
           </div>
         `;
 
         const headerEl = card.querySelector('.news-header');
-        headerEl.addEventListener('click', () => {
+        const detailWrapper = card.querySelector('.news-detail-wrapper');
+        let detailLoaded = false;
+
+        headerEl.addEventListener('click', async () => {
           card.classList.toggle('active');
+
+          // 처음 열 때만 API 호출
+          if (card.classList.contains('active') && !detailLoaded) {
+            try {
+              const response = await fetch(`/api/generate-detail?id=${item.id}&title=${encodeURIComponent(item.title)}`);
+              if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || '상세 정보 로드 실패');
+              }
+              
+              const detail = await response.json();
+              
+              const sourcesHtml = detail.sources && detail.sources.length > 0
+                ? detail.sources.map(src => `<a href="${src.url}" target="_blank" rel="noopener noreferrer" class="source-chip">🔗 ${src.name}</a>`).join('')
+                : '<span style="font-size:0.8rem; color:var(--text-muted);">출처 정보 없음</span>';
+
+              detailWrapper.innerHTML = `
+                <div class="news-detail-content">
+                  <h4>상세 브리핑</h4>
+                  <p class="detail-text">${detail.details}</p>
+                  <div class="source-section">
+                    <h4>기사 출처</h4>
+                    <div class="source-list">
+                      ${sourcesHtml}
+                    </div>
+                  </div>
+                </div>
+              `;
+              detailLoaded = true;
+            } catch (error) {
+              console.error("Detail Fetch Error:", error);
+              detailWrapper.innerHTML = `
+                <div class="news-detail-content" style="color: #EF4444; padding: 20px; text-align: center;">
+                  <p>${error.message || '상세 정보를 불러올 수 없습니다.'}</p>
+                </div>
+              `;
+            }
+          }
         });
 
         newsContainer.appendChild(card);
@@ -371,7 +420,7 @@
       newsContainer.innerHTML = `
         <div class="loading-state">
           <div class="spinner"></div>
-          <p>실시간 뉴스를 수집하고 AI로 종합 요약 중입니다...</p>
+          <p>뉴스 목록을 불러오는 중입니다...</p>
         </div>
       `;
     }
@@ -385,10 +434,10 @@
       `;
     }
 
-    refreshBtn.addEventListener('click', fetchAndSummarizeNews);
+    refreshBtn.addEventListener('click', fetchNewsSummaries);
     
     // 초기 실행
-    fetchAndSummarizeNews();
+    fetchNewsSummaries();
   </script>
 </body>
 </html>
