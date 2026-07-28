@@ -41,7 +41,9 @@ export default async function handler(req, res) {
     return estimateTokensByChars(text);
   }
   // --------------------------------------------------------------------
-
+  
+  let promptText = `한국 주요 뉴스 4건을 JSON 형식으로:[{"id":1,"category":"","title":"","summary":"","details":"","sources":[{"name":"","url":""}]}]`;
+  
   // check estimated tokens for prompt and trim if too large
   const PROMPT_TOKEN_WARN = Number(process.env.PROMPT_TOKEN_WARN) || 800; // warn threshold
   const PROMPT_TOKEN_MAX = Number(process.env.PROMPT_TOKEN_MAX) || 1200; // hard max for safety
