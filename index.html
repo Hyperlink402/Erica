@@ -1,877 +1,435 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>실시간 AI 뉴스 브리핑</title>
-<link rel="stylesheet" href="news-card-ratio.css">
-<style>
-/* 전체 화이트 톤 스타일링 */
-:root {
---bg-color: #F9FAFB;
---card-bg: #FFFFFF;
---border-color: #E5E7EB;
---border-hover: #D1D5DB;
---text-main: #111827;
---text-sub: #4B5563;
---text-muted: #9CA3AF;
---accent-color: #2563EB;
---accent-light: #EFF6FF;
---shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
---shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-}
-
-* {
-box-sizing: border-box;
-margin: 0;
-padding: 0;
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-body {
-background-color: var(--bg-color);
-color: var(--text-main);
-padding: 40px 20px;
-display: flex;
-justify-content: center;
-}
-
-.container {
-width: 100%;
-max-width: 800px;
-}
-
-/* 헤더 영역 */
-header {
-margin-bottom: 32px;
-text-align: center;
-}
-
-header h1 {
-font-size: 1.8rem;
-font-weight: 700;
-color: var(--text-main);
-letter-spacing: -0.02em;
-}
-
-header p {
-margin-top: 8px;
-color: var(--text-sub);
-font-size: 0.95rem;
-}
-
-/* 컨트롤 버튼 */
-.controls {
-display: flex;
-justify-content: flex-end;
-margin-bottom: 20px;
-}
-
-.btn-refresh {
-background-color: var(--card-bg);
-color: var(--text-main);
-border: 1px solid var(--border-color);
-padding: 8px 16px;
-border-radius: 8px;
-font-size: 0.9rem;
-font-weight: 500;
-cursor: pointer;
-box-shadow: var(--shadow-sm);
-transition: all 0.2s ease;
-display: flex;
-align-items: center;
-gap: 6px;
-}
-
-.btn-refresh:hover {
-border-color: var(--border-hover);
-background-color: #F3F4F6;
-}
-
-.btn-refresh:disabled {
-opacity: 0.6;
-cursor: not-allowed;
-}
-
-/* 뉴스 리스트 및 카드 */
-.news-list {
-display: flex;
-flex-direction: column;
-gap: 16px;
-}
-
-.news-card {
-background-color: var(--card-bg);
-border: 1px solid var(--border-color);
-border-radius: 12px;
-box-shadow: var(--shadow-sm);
-overflow: hidden;
-transition: border-color 0.2s ease, box-shadow 0.2s ease;
-padding: 24px 32px;
-}
-
-.news-card:hover {
-border-color: var(--border-hover);
-box-shadow: var(--shadow-md);
-}
-
-.news-header {
-padding: 24px 32px;
-padding: 20px;
-cursor: pointer;
-display: flex;
-justify-content: space-between;
-align-items: flex-start;
-gap: 16px;
-text-decoration: none;
-color: var(--text-sub);
-}
-
-.news-main-info {
-flex: 1;
-}
-
-.category-badge {
-display: inline-block;
-font-size: 0.75rem;
-font-weight: 600;
-color: var(--accent-color);
-background-color: var(--accent-light);
-padding: 2px 8px;
-border-radius: 4px;
-margin-bottom: 8px;
-}
-
-.news-title {
-font-size: 1.15rem;
-font-weight: 600;
-line-height: 1.4;
-color: var(--text-main);
-margin-bottom: 8px;
-}
-
-.news-summary {
-font-size: 0.95rem;
-color: var(--text-sub);
-line-height: 1.5;
-}
-
-/* 꺽쇠(Chevron) 버튼 및 회전 애니메이션 */
-.toggle-btn {
-background: none;
-border: none;
-cursor: pointer;
-padding: 4px;
-color: var(--text-muted);
-display: flex;
-align-items: center;
-justify-content: center;
-transition: color 0.2s ease;
-}
-
-.news-card:hover .toggle-btn {
-color: var(--text-main);
-}
-
-.chevron-icon {
-width: 20px;
-height: 20px;
-transition: transform 0.3s ease;
-}
-
-.news-card.active .chevron-icon {
-transform: rotate(180deg);
-}
-
-/* 상세 내용 및 출처 영역 (토글 대상) */
-.news-detail-wrapper {
-max-height: 0;
-overflow: hidden;
-transition: max-height 0.35s ease-in-out;
-background-color: #FAFAFA;
-background-color: #FFFFFF;
-border-top: 0px solid var(--border-color);
-}
-
-.news-card.active .news-detail-wrapper {
-max-height: 1000px;
-border-top-width: 1px;
-}
-
-.news-detail-content {
-padding: 20px;
-font-size: 0.92rem;
-color: var(--text-sub);
-line-height: 1.6;
-}
-
-.news-detail-content h4 {
-font-size: 0.85rem;
-text-transform: uppercase;
-letter-spacing: 0.05em;
-color: var(--text-muted);
-margin-bottom: 8px;
-}
-
-.detail-text {
-margin-bottom: 16px;
-white-space: pre-line;
-}
-
-/* 로딩 상태 표기 */
-.loading-state {
-text-align: center;
-padding: 60px 0;
-color: var(--text-sub);
-}
-
-.spinner {
-width: 32px;
-height: 32px;
-border: 3px solid var(--border-color);
-border-top-color: var(--accent-color);
-border-radius: 50%;
-animation: spin 0.8s linear infinite;
-margin: 0 auto 16px;
-}
-
-@keyframes spin {
-to { transform: rotate(360deg); }
-}
-
-.detail-loading {
-padding: 20px;
-text-align: center;
-}
-
-.detail-loading .spinner {
-width: 24px;
-height: 24px;
-margin: 0 auto 8px;
-}
-
-.detail-loading p {
-font-size: 0.85rem;
-color: var(--text-muted);
-}
-
-/* 무한 스크롤 로딩 표시 */
-infinite-scroll-loader {
-text-align: center;
-padding: 24px 0;
-min-height: 100px;
-opacity: 0;
-visibility: hidden;
-transition: opacity 0.2s ease;
-}
-
-.infinite-scroll-loader.active {
-opacity: 1;
-visibility: visible;
-}
-
-.no-more-news {
-text-align: center;
-padding: 24px 0;
-color: var(--text-muted);
-font-size: 0.9rem;
-display: none;
-}
-
-.infinite-scroll-loader.active {
-display: block;
-}
-
-.infinite-scroll-loader .spinner {
-width: 24px;
-height: 24px;
-margin: 0 auto 8px;
-}
-
-.infinite-scroll-loader p {
-font-size: 0.9rem;
-color: var(--text-muted);
-}
-
-a, a:link, a:visited, a:hover, a:active {
-color: inherit !important;
-text-decoration: none !important;
-}
-
-/* 게시판 / 피드백 전용 스타일 */
-.feedback-floating-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  background-color: var(--accent-color);
-  color: #FFFFFF !important;
-  border: none;
-  border-radius: 30px;
-  padding: 12px 20px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 999;
-  transition: all 0.2s ease;
-}
-
-.feedback-floating-btn:hover {
-  background-color: #1D4ED8;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
-}
-
-.feedback-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(17, 24, 39, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.25s ease;
-}
-
-.feedback-modal-overlay.open {
-  opacity: 1;
-  visibility: visible;
-}
-
-.feedback-modal {
-  background-color: var(--card-bg);
-  width: 90%;
-  max-width: 480px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  padding: 24px;
-  border: 1px solid var(--border-color);
-}
-
-.feedback-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.feedback-modal-header h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.feedback-close-btn {
-  background: none;
-  border: none;
-  font-size: 1.3rem;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.feedback-form-group {
-  margin-bottom: 14px;
-}
-
-.feedback-form-group label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-sub);
-  margin-bottom: 6px;
-}
-
-.feedback-form-group input,
-.feedback-form-group textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: var(--text-main);
-  background-color: #FAFAFA;
-  outline: none;
-}
-
-.feedback-form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.feedback-submit-btn {
-  width: 100%;
-  background-color: var(--accent-color);
-  color: #FFFFFF !important;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.feedback-submit-btn:hover {
-  background-color: #1D4ED8;
-}
-
-.feedback-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Firestore 피드백 게시글 목록 영역 스타일 */
-.feedback-list-container {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px dashed var(--border-color);
-  overflow-y: auto;
-  max-height: 250px;
-}
-
-.feedback-list-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 12px;
-}
-
-.feedback-item {
-  background-color: #FAFAFA;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
-}
-
-.feedback-item-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-.feedback-item-author {
-  font-weight: 600;
-  color: var(--text-sub);
-}
-
-.feedback-item-content {
-  font-size: 0.88rem;
-  color: var(--text-main);
-  white-space: pre-line;
-  line-height: 1.4;
-}
-
-.feedback-empty {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  padding: 20px 0;
-}
-</style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>실시간 AI 뉴스 브리핑</title>
+    <!-- Tailwind CSS (Source 2 기반) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts & Material Symbols (Source 2 기반) -->
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f4f3f8",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#e2e2e2",
+                        "surface-variant": "#e3e2e7",
+                        "inverse-primary": "#c6c6c6",
+                        "surface": "#faf9fe",
+                        "on-primary-fixed": "#1b1b1b",
+                        "on-secondary-container": "#616363",
+                        "outline-variant": "#cfc4c5",
+                        "on-secondary-fixed-variant": "#454747",
+                        "on-secondary": "#ffffff",
+                        "background": "#faf9fe",
+                        "tertiary-fixed": "#e2e2e7",
+                        "on-surface-variant": "#4c4546",
+                        "on-tertiary-container": "#828488",
+                        "on-tertiary-fixed-variant": "#45474b",
+                        "surface-tint": "#5e5e5e",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-tertiary-fixed": "#1a1c1f",
+                        "secondary": "#5d5f5f",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#faf9fe",
+                        "on-background": "#1a1b1f",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-primary-container": "#848484",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "surface-container-high": "#e9e7ed",
+                        "tertiary-fixed-dim": "#c6c6cb",
+                        "surface-container": "#eeedf3",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#7e7576",
+                        "tertiary": "#000000",
+                        "secondary-container": "#dfe0e0",
+                        "surface-container-highest": "#e3e2e7",
+                        "surface-dim": "#dad9df",
+                        "inverse-on-surface": "#f1f0f5",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2f3034",
+                        "on-surface": "#1a1b1f",
+                        "tertiary-container": "#1a1c1f",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#000000",
+                        "primary-container": "#1b1b1b"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.03);
+        }
+        .specular-border {
+            border-top: 1px solid rgba(255, 255, 255, 0.8);
+            border-left: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+    </style>
 </head>
-<body>
+<body class="bg-background font-body-md text-on-surface min-h-screen flex flex-col custom-scrollbar antialiased">
 
-<div class="container">
-<header>
-<h1>실시간 주요 뉴스 브리핑</h1>
-<p>Google News RSS에서 실시간 화제 기사를 선별합니다.</p>
-</header>
-
-<div class="controls">
-<button class="btn-refresh" id="refreshBtn">
-🔄 뉴스 새로고침
-</button>
-</div>
-
-<div id="newsContainer" class="news-list">
-<!-- 뉴스 카드가 스크립트에 의해 여기에 동적으로 생성됩니다. -->
-</div>
-
-<div class="infinite-scroll-loader" id="infiniteLoader">
-<div class="spinner"></div>
-<p>더 많은 뉴스를 불러오는 중...</p>
-</div>
-
-<div class="no-more-news" id="noMoreNews" style="display: none;">
-더 이상 뉴스가 없습니다.
-</div>
-</div>
-
-<!-- 화면 우측 하단 게시판/피드백 모달 버튼 및 레이어 -->
-<button class="feedback-floating-btn" id="openFeedbackBtn" aria-label="피드백 게시판 작성">
-  💬 피드백 게시판
-</button>
-
-<div class="feedback-modal-overlay" id="feedbackModal">
-  <div class="feedback-modal">
-    <div class="feedback-modal-header">
-      <h3>의견 작성 및 피드백 게시판</h3>
-      <button class="feedback-close-btn" id="closeFeedbackBtn">&times;</button>
-    </div>
-    <form id="feedbackForm">
-      <div class="feedback-form-group">
-        <label for="fbName">이름 / 닉네임</label>
-        <input type="text" id="fbName" placeholder="익명">
-      </div>
-      <div class="feedback-form-group">
-        <label for="fbContent">피드백 내용</label>
-        <textarea id="fbContent" required placeholder="개선 사항이나 원하시는 요청을 자유롭게 남겨주세요."></textarea>
-      </div>
-      <button type="submit" class="feedback-submit-btn" id="fbSubmitBtn">피드백 제출하기</button>
-    </form>
-
-    <!-- Firestore에서 불러온 게시글 목록 출력 영역 -->
-    <div class="feedback-list-container">
-      <div class="feedback-list-title">📋 최근 작성된 피드백 목록</div>
-      <div id="feedbackList">
-        <div class="feedback-empty">목록을 불러오는 중...</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-const newsContainer = document.getElementById('newsContainer');
-const refreshBtn = document.getElementById('refreshBtn');
-const infiniteLoader = document.getElementById('infiniteLoader');
-const noMoreNews = document.getElementById('noMoreNews');
-
-let newsData = [];
-let currentPage = 1;
-let hasMore = true;
-let isLoading = false;
-
-// 무한 스크롤 Observer 감시 제어
-const observer = new IntersectionObserver((entries) => {
-if (entries[0].isIntersecting && hasMore && !isLoading) {
-fetchNewsSummaries(currentPage + 1, true);
-}
-}, { rootMargin: '100px' });
-
-function setupInfiniteScroll() {
-if (infiniteLoader) {
-observer.observe(infiniteLoader);
-}
-}
-
-function stopInfiniteScroll() {
-if (infiniteLoader) {
-observer.unobserve(infiniteLoader);
-}
-}
-
-// 뉴스 요약 로드
-async function fetchNewsSummaries(page = 1, append = false) {
-if (isLoading) return;
-isLoading = true;
-
-stopInfiniteScroll();
-
-if (!append) {
-infiniteLoader.classList.remove('active');
-noMoreNews.style.display = 'none';
-showLoading();
-} else {
-infiniteLoader.classList.add('active');
-}
-refreshBtn.disabled = true;
-
-try {
-const response = await fetch(`/api/generate-summary?page=${page}`);
-if (!response.ok) {
-const errData = await response.json().catch(() => ({}));
-throw new Error(errData.error || `서버 에러가 발생했습니다. (Status: ${response.status})`);
-}
-
-const data = await response.json();
-
-if (!append) {
-newsData = data.items || [];
-currentPage = data.page || 1;
-hasMore = data.hasMore ?? false;
-renderNewsCards(newsData, false);
-} else {
-newsData = [...newsData, ...(data.items || [])];
-currentPage = data.page || 1;
-hasMore = data.hasMore ?? false;
-renderNewsCards(data.items || [], true);
-}
-
-if (!hasMore) {
-infiniteLoader.classList.remove('active');
-noMoreNews.style.display = 'block';
-} else {
-infiniteLoader.classList.remove('active');
-setupInfiniteScroll();
-}
-} catch (error) {
-console.error("Error:", error);
-if (!append) {
-showError(error.message);
-} else {
-infiniteLoader.classList.remove('active');
-console.error("페이지 로드 실패:", error.message);
-}
-} finally {
-isLoading = false;
-refreshBtn.disabled = false;
-}
-}
-
-function renderNewsCards(newsItems, append = false) {
-if (!Array.isArray(newsItems) || newsItems.length === 0) {
-if (!append) {
-showError("표시할 뉴스 데이터가 없습니다.");
-}
-return;
-}
-
-if (!append) {
-newsContainer.innerHTML = '';
-}
-
-newsItems.forEach((item) => {
-const card = document.createElement('div');
-card.className = 'news-card';
-
-card.innerHTML = `
-        <div class="news-header">
-          <div class="news-main-info">
-            <span class="category-badge">${item.category || '뉴스'}</span>
-            <h2 class="news-title">${item.title}</h2>
-            <p class="news-summary">${item.summary}</p>
-          </div>
-          <button class="toggle-btn" aria-label="상세보기 토글">
-            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
+    <!-- Top AppBar (Source 2 Style) -->
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-3xl border-b border-white/40 px-6 h-16 flex items-center justify-between shadow-sm">
+        <div class="max-w-4xl mx-auto w-full flex items-center justify-between">
+            <h1 class="font-display-lg text-xl sm:text-2xl font-bold tracking-tight text-primary">실시간 주요 뉴스 브리핑</h1>
+            <button id="refreshBtn" class="flex items-center gap-2 bg-white/90 hover:bg-white backdrop-blur-md text-primary px-4 py-2 rounded-full border border-black/10 shadow-sm transition-all active:scale-95 text-xs sm:text-sm font-bold cursor-pointer disabled:opacity-50">
+                <span class="material-symbols-outlined text-lg">refresh</span>
+                <span>뉴스 새로고침</span>
+            </button>
         </div>
-        <div class="news-detail-wrapper">
-          <div class="news-detail-content">
-            <div class="detail-loading">
-              <div class="spinner"></div>
-              <p>상세 정보 로드 중...</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-2xl w-full mx-auto px-4 py-8 space-y-6">
+        <div class="text-center space-y-1 mb-6">
+            <p class="text-sm text-on-surface-variant/80">Google News RSS에서 실시간 화제 기사를 선별합니다.</p>
+        </div>
+
+        <!-- News Container -->
+        <div id="newsContainer" class="space-y-4">
+            <!-- 동적 카드가 스크립트로 생성됨 -->
+        </div>
+
+        <!-- Infinite Scroll Loader -->
+        <div id="infiniteLoader" class="py-8 text-center text-on-surface-variant opacity-0 transition-opacity duration-200">
+            <div class="w-7 h-7 border-2 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-2"></div>
+            <p class="text-xs font-medium text-on-surface-variant/70">더 많은 뉴스를 불러오는 중...</p>
+        </div>
+
+        <!-- No More News Alert -->
+        <div id="noMoreNews" class="py-8 text-center text-on-surface-variant/60 text-sm font-medium hidden">
+            더 이상 뉴스가 없습니다.
+        </div>
+    </main>
+
+    <!-- Floating Feedback Button (Source 3 기능) -->
+    <button id="openFeedbackBtn" class="fixed bottom-6 right-6 z-40 bg-primary text-on-primary hover:bg-primary/90 px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm transition-all active:scale-95 cursor-pointer" aria-label="피드백 게시판 작성">
+        <span class="material-symbols-outlined text-xl">chat</span>
+        <span>피드백 게시판</span>
+    </button>
+
+    <!-- Feedback Modal Window (Source 3 기능 & Source 2 디자인) -->
+    <div id="feedbackModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel w-full max-w-md bg-white/90 rounded-[32px] p-6 sm:p-8 border border-white/60 shadow-2xl transform scale-95 transition-all duration-300 modal-box">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-primary tracking-tight">의견 작성 및 피드백 게시판</h3>
+                <button id="closeFeedbackBtn" class="p-2 text-primary/60 hover:text-primary hover:bg-black/5 rounded-full transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
-          </div>
-        </div>
-      `;
-
-const headerEl = card.querySelector('.news-header');
-const detailWrapper = card.querySelector('.news-detail-wrapper');
-let detailLoaded = false;
-let isFetchingDetail = false;
-
-headerEl.addEventListener('click', async () => {
-card.classList.toggle('active');
-
-if (card.classList.contains('active') && !detailLoaded && !isFetchingDetail) {
-isFetchingDetail = true;
-try {
-const response = await fetch(`/api/generate-detail?id=${item.id}&title=${encodeURIComponent(item.title)}`);
-if (!response.ok) {
-const errData = await response.json().catch(() => ({}));
-throw new Error(errData.error || '상세 정보 로드 실패');
-}
-
-const detail = await response.json();
-
-const sourcesHtml = detail.sources && detail.sources.length > 0;
-
-detailWrapper.innerHTML = `
-              <div class="news-detail-content">
-                <h4>상세 브리핑</h4>
-                <p class="detail-text">${detail.details}</p>
-                <div class="source-section">
-                  <h4>기사 출처</h4>
-                  <div class="source-list">
-                    ${sourcesHtml}
-                  </div>
+            <form id="feedbackForm" class="space-y-4">
+                <div>
+                    <label for="fbName" class="block text-xs font-bold uppercase tracking-wider text-primary/70 mb-2">이름 / 닉네임</label>
+                    <input type="text" id="fbName" placeholder="익명" class="w-full bg-black/[0.04] border border-black/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary placeholder:text-primary/40">
                 </div>
-              </div>
-            `;
-detailLoaded = true;
-} catch (error) {
-console.error("Detail Fetch Error:", error);
-detailWrapper.innerHTML = `
-              <div class="news-detail-content" style="color: #EF4444; padding: 20px; text-align: center;">
-                <p>${error.message || '상세 정보를 불러올 수 없습니다.'}</p>
-              </div>
-            `;
-} finally {
-isFetchingDetail = false;
-}
-}
-});
-
-newsContainer.appendChild(card);
-});
-}
-
-function showLoading() {
-newsContainer.innerHTML = `
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>뉴스 목록을 불러오는 중입니다...</p>
-      </div>
-    `;
-}
-
-function showError(message) {
-newsContainer.innerHTML = `
-      <div class="loading-state">
-        <p style="color: #EF4444; font-weight: 500;">${message}</p>
-        <p style="color: #9CA3AF; font-size: 0.85rem; margin-top: 8px;">문제가 계속되면 개발자 콘솔을 확인하세요.</p>
-      </div>
-    `;
-}
-
-// 새로고침 버튼 이벤트
-refreshBtn.addEventListener('click', () => {
-currentPage = 1;
-hasMore = true;
-fetchNewsSummaries(1, false);
-});
-
-// 초기 실행
-fetchNewsSummaries(1, false);
-
-// 피드백 모달 열기/닫기 기본 제어
-const openFeedbackBtn = document.getElementById('openFeedbackBtn');
-const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
-const feedbackModal = document.getElementById('feedbackModal');
-
-openFeedbackBtn.addEventListener('click', () => {
-  feedbackModal.classList.add('open');
-});
-
-closeFeedbackBtn.addEventListener('click', () => {
-  feedbackModal.classList.remove('open');
-});
-
-feedbackModal.addEventListener('click', (e) => {
-  if (e.target === feedbackModal) {
-    feedbackModal.classList.remove('open');
-  }
-});
-</script>
-
-<!-- Firebase Firestore 연동 스크립트 -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-  import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    query, 
-    orderBy, 
-    onSnapshot, 
-    serverTimestamp 
-  } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-
-  // 요청하신 firebaseConfig 설정 적용
-  const firebaseConfig = {
-    apiKey: "AIzaSyDGbrQclH1hQhcnRepyjeZcr36hf3mBwSs",
-    authDomain: "erica-e67dd.firebaseapp.com",
-    projectId: "erica-e67dd",
-    storageBucket: "erica-e67dd.firebasestorage.app",
-    messagingSenderId: "40085931746",
-    appId: "1:40085931746:web:bbbf5f0040d8fcc7e7c0bb"
-  };
-
-  // Firebase 초기화
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  const feedbackForm = document.getElementById('feedbackForm');
-  const feedbackList = document.getElementById('feedbackList');
-  const fbSubmitBtn = document.getElementById('fbSubmitBtn');
-
-  // Firestore 데이터 불러오기 (최신순 desc)
-  const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
-  
-  onSnapshot(q, (snapshot) => {
-    if (snapshot.empty) {
-      feedbackList.innerHTML = `<div class="feedback-empty">등록된 피드백이 없습니다. 첫 의견을 남겨보세요!</div>`;
-      return;
-    }
-
-    let html = '';
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleString('ko-KR', {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-      }) : '방금 전';
-
-      html += `
-        <div class="feedback-item">
-          <div class="feedback-item-header">
-            <span class="feedback-item-author">${escapeHtml(data.name || '익명')}</span>
-            <span>${dateStr}</span>
-          </div>
-          <div class="feedback-item-content">${escapeHtml(data.content || '')}</div>
+                <div>
+                    <label for="fbContent" class="block text-xs font-bold uppercase tracking-wider text-primary/70 mb-2">피드백 내용</label>
+                    <textarea id="fbContent" required rows="4" placeholder="개선 사항이나 원하시는 요청을 자유롭게 남겨주세요." class="w-full bg-black/[0.04] border border-black/10 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary placeholder:text-primary/40 resize-none"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-on-primary font-bold py-3.5 rounded-2xl transition-all active:scale-95 shadow-md mt-2 cursor-pointer">
+                    피드백 제출하기
+                </button>
+            </form>
         </div>
-      `;
-    });
-    feedbackList.innerHTML = html;
-  }, (error) => {
-    console.error("Firestore Read Error:", error);
-    feedbackList.innerHTML = `<div class="feedback-empty" style="color: #EF4444;">목록을 불러오는 중 오류가 발생했습니다. (Firebase 보안 규칙을 확인해주세요)</div>`;
-  });
+    </div>
 
-  // 피드백 등록 이벤트
-  feedbackForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('fbName').value.trim() || '익명';
-    const content = document.getElementById('fbContent').value.trim();
+    <!-- 기능 스크립트 (Source 3 기능 전체 구현) -->
+    <script>
+        const newsContainer = document.getElementById('newsContainer');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const infiniteLoader = document.getElementById('infiniteLoader');
+        const noMoreNews = document.getElementById('noMoreNews');
 
-    if (!content) return;
+        let newsData = [];
+        let currentPage = 1;
+        let hasMore = true;
+        let isLoading = false;
 
-    fbSubmitBtn.disabled = true;
-    fbSubmitBtn.textContent = '등록 중...';
+        // 무한 스크롤 Observer 감시 제어
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && hasMore && !isLoading) {
+                fetchNewsSummaries(currentPage + 1, true);
+            }
+        }, { rootMargin: '100px' });
 
-    try {
-      await addDoc(collection(db, "feedbacks"), {
-        name: name,
-        content: content,
-        createdAt: serverTimestamp()
-      });
+        function setupInfiniteScroll() {
+            if (infiniteLoader) {
+                observer.observe(infiniteLoader);
+            }
+        }
 
-      alert('피드백이 성공적으로 등록되었습니다.');
-      feedbackForm.reset();
-    } catch (error) {
-      console.error("Firestore Write Error:", error);
-      alert('피드백 등록 실패: ' + error.message);
-    } finally {
-      fbSubmitBtn.disabled = false;
-      fbSubmitBtn.textContent = '피드백 제출하기';
-    }
-  });
+        function stopInfiniteScroll() {
+            if (infiniteLoader) {
+                observer.unobserve(infiniteLoader);
+            }
+        }
 
-  // XSS 방지용 이스케이프
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-</script>
+        // 뉴스 요약 데이터 요청
+        async function fetchNewsSummaries(page = 1, append = false) {
+            if (isLoading) return;
+            isLoading = true;
+
+            stopInfiniteScroll();
+
+            if (!append) {
+                infiniteLoader.classList.remove('opacity-100');
+                noMoreNews.classList.add('hidden');
+                showLoading();
+            } else {
+                infiniteLoader.classList.add('opacity-100');
+            }
+            refreshBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/generate-summary?page=${page}`);
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || `서버 에러가 발생했습니다. (Status: ${response.status})`);
+                }
+
+                const data = await response.json();
+
+                if (!append) {
+                    newsData = data.items || [];
+                    currentPage = data.page || 1;
+                    hasMore = data.hasMore ?? false;
+                    renderNewsCards(newsData, false);
+                } else {
+                    newsData = [...newsData, ...(data.items || [])];
+                    currentPage = data.page || 1;
+                    hasMore = data.hasMore ?? false;
+                    renderNewsCards(data.items || [], true);
+                }
+
+                if (!hasMore) {
+                    infiniteLoader.classList.remove('opacity-100');
+                    noMoreNews.classList.remove('hidden');
+                } else {
+                    infiniteLoader.classList.remove('opacity-100');
+                    setupInfiniteScroll();
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                if (!append) {
+                    showError(error.message);
+                } else {
+                    infiniteLoader.classList.remove('opacity-100');
+                    console.error("페이지 로드 실패:", error.message);
+                }
+            } finally {
+                isLoading = false;
+                refreshBtn.disabled = false;
+            }
+        }
+
+        function renderNewsCards(newsItems, append = false) {
+            if (!Array.isArray(newsItems) || newsItems.length === 0) {
+                if (!append) {
+                    showError("표시할 뉴스 데이터가 없습니다.");
+                }
+                return;
+            }
+
+            if (!append) {
+                newsContainer.innerHTML = '';
+            }
+
+            newsItems.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'news-card bg-white rounded-[32px] p-2 shadow-sm border border-black/[0.03] transition-all hover:shadow-md';
+
+                card.innerHTML = `
+                    <div class="glass-panel w-full rounded-[28px] overflow-hidden flex flex-col relative specular-border p-6 sm:p-8">
+                        <div class="news-header cursor-pointer flex justify-between items-start gap-4">
+                            <div class="news-main-info space-y-2 flex-1">
+                                <span class="inline-block px-3 py-1 rounded-full text-[11px] font-bold bg-black/[0.05] text-primary tracking-wider uppercase">${item.category || '뉴스'}</span>
+                                <h2 class="font-display-lg text-lg sm:text-2xl font-bold text-primary tracking-tight leading-snug">${item.title}</h2>
+                                <p class="text-on-surface-variant font-body-md text-sm sm:text-base leading-relaxed">${item.summary}</p>
+                            </div>
+                            <button class="toggle-btn p-2 rounded-full hover:bg-black/5 text-primary/60 hover:text-primary transition-all shrink-0 cursor-pointer" aria-label="상세보기 토글">
+                                <span class="material-symbols-outlined text-2xl transition-transform duration-300 chevron-icon">keyboard_arrow_down</span>
+                            </button>
+                        </div>
+                        <div class="news-detail-wrapper max-h-0 overflow-hidden transition-all duration-300 ease-in-out opacity-0">
+                            <div class="pt-6 mt-6 border-t border-black/[0.06] news-detail-content">
+                                <div class="detail-loading text-center py-4 text-on-surface-variant flex flex-col items-center gap-2">
+                                    <div class="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                    <p class="text-xs font-medium">상세 정보 로드 중...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const headerEl = card.querySelector('.news-header');
+                const detailWrapper = card.querySelector('.news-detail-wrapper');
+                const chevronIcon = card.querySelector('.chevron-icon');
+                let detailLoaded = false;
+                let isFetchingDetail = false;
+
+                headerEl.addEventListener('click', async () => {
+                    const isExpanded = card.classList.contains('active');
+
+                    if (isExpanded) {
+                        card.classList.remove('active');
+                        detailWrapper.style.maxHeight = '0px';
+                        detailWrapper.classList.remove('opacity-100');
+                        detailWrapper.classList.add('opacity-0');
+                        chevronIcon.classList.remove('rotate-180');
+                    } else {
+                        card.classList.add('active');
+                        chevronIcon.classList.add('rotate-180');
+
+                        if (!detailLoaded && !isFetchingDetail) {
+                            isFetchingDetail = true;
+                            detailWrapper.style.maxHeight = '150px';
+                            detailWrapper.classList.remove('opacity-0');
+                            detailWrapper.classList.add('opacity-100');
+
+                            try {
+                                const response = await fetch(`/api/generate-detail?id=${item.id}&title=${encodeURIComponent(item.title)}`);
+                                if (!response.ok) {
+                                    const errData = await response.json().catch(() => ({}));
+                                    throw new Error(errData.error || '상세 정보 로드 실패');
+                                }
+
+                                const detail = await response.json();
+
+                                detailWrapper.innerHTML = `
+                                    <div class="pt-6 mt-6 border-t border-black/[0.06] news-detail-content space-y-2">
+                                        <h4 class="font-bold text-xs uppercase tracking-widest text-primary/70">상세 브리핑</h4>
+                                        <p class="text-on-surface-variant text-sm sm:text-base leading-relaxed whitespace-pre-line">${detail.details}</p>
+                                    </div>
+                                `;
+                                detailLoaded = true;
+                                detailWrapper.style.maxHeight = detailWrapper.scrollHeight + 50 + 'px';
+                            } catch (error) {
+                                console.error("Detail Fetch Error:", error);
+                                detailWrapper.innerHTML = `
+                                    <div class="pt-6 mt-6 border-t border-black/[0.06] news-detail-content text-red-500 text-sm text-center py-4">
+                                        <p>${error.message || '상세 정보를 불러올 수 없습니다.'}</p>
+                                    </div>
+                                `;
+                                detailWrapper.style.maxHeight = detailWrapper.scrollHeight + 50 + 'px';
+                            } finally {
+                                isFetchingDetail = false;
+                            }
+                        } else {
+                            detailWrapper.style.maxHeight = detailWrapper.scrollHeight + 50 + 'px';
+                            detailWrapper.classList.remove('opacity-0');
+                            detailWrapper.classList.add('opacity-100');
+                        }
+                    }
+                });
+
+                newsContainer.appendChild(card);
+            });
+        }
+
+        function showLoading() {
+            newsContainer.innerHTML = `
+                <div class="py-16 text-center text-on-surface-variant">
+                    <div class="w-9 h-9 border-2 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-sm font-medium">뉴스 목록을 불러오는 중입니다...</p>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            newsContainer.innerHTML = `
+                <div class="py-16 text-center">
+                    <p class="text-red-500 font-medium mb-2">${message}</p>
+                    <p class="text-xs text-on-surface-variant/60">문제가 계속되면 개발자 콘솔을 확인하세요.</p>
+                </div>
+            `;
+        }
+
+        // 새로고침 이벤트
+        refreshBtn.addEventListener('click', () => {
+            currentPage = 1;
+            hasMore = true;
+            fetchNewsSummaries(1, false);
+        });
+
+        // 초기 데이터 로딩
+        fetchNewsSummaries(1, false);
+
+        // 피드백 게시판 모달 제어 logic (Source 3)
+        const openFeedbackBtn = document.getElementById('openFeedbackBtn');
+        const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
+        const feedbackModal = document.getElementById('feedbackModal');
+        const feedbackForm = document.getElementById('feedbackForm');
+
+        const closeModal = () => {
+            feedbackModal.classList.add('opacity-0', 'pointer-events-none');
+            const modalBox = feedbackModal.querySelector('.modal-box');
+            if (modalBox) {
+                modalBox.classList.remove('scale-100');
+                modalBox.classList.add('scale-95');
+            }
+        };
+
+        openFeedbackBtn.addEventListener('click', () => {
+            feedbackModal.classList.remove('opacity-0', 'pointer-events-none');
+            const modalBox = feedbackModal.querySelector('.modal-box');
+            if (modalBox) {
+                modalBox.classList.remove('scale-95');
+                modalBox.classList.add('scale-100');
+            }
+        });
+
+        closeFeedbackBtn.addEventListener('click', closeModal);
+
+        feedbackModal.addEventListener('click', (e) => {
+            if (e.target === feedbackModal) {
+                closeModal();
+            }
+        });
+
+        feedbackForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('fbName').value || '익명';
+            alert(`감사합니다, ${name}님!\n소중한 피드백이 정상적으로 제출되었습니다.`);
+            feedbackForm.reset();
+            closeModal();
+        });
+    </script>
 </body>
 </html>
