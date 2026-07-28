@@ -123,7 +123,7 @@ display: flex;
 justify-content: space-between;
 align-items: flex-start;
 gap: 16px;
-text-decoration: none;    /* 1. 밑줄 제거 */
+text-decoration: none;
 color: var(--text-sub);
 }
 
@@ -218,43 +218,6 @@ margin-bottom: 16px;
 white-space: pre-line;
 }
 
-/* 출처 링크 영역 */
-/*.source-section {
-border-top: 1px dashed var(--border-color);
-padding-top: 12px;
-margin-top: 12px;
-padding-left: 20px;
-}
-
-.source-list {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-margin-top: 6px;
-list-style: none;
-}
-
-.source-chip {
-display: inline-flex;
-align-items: center;
-gap: 4px;
-background-color: var(--card-bg);
-border: 1px solid var(--border-color);
-padding: 4px 10px;
-border-radius: 6px;
-font-size: 0.8rem;
-
-/* === 하이퍼링크 효과 제거 설정 === */
-/*text-decoration: none;    /* 1. 밑줄 제거 */
-/*color: var(--text-sub);   /* 2. 파란색 대신 일반 본문 글자 색상 적용 (또나 color: inherit) */
-
-/*transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.source-chip:hover {
-background-color: var(--accent-light);
-} */
-
 /* 로딩 상태 표기 */
 .loading-state {
 text-align: center;
@@ -296,7 +259,7 @@ color: var(--text-muted);
 infinite-scroll-loader {
 text-align: center;
 padding: 24px 0;
-min-height: 100px; /* 감지 영역 높이 확보 */
+min-height: 100px;
 opacity: 0;
 visibility: hidden;
 transition: opacity 0.2s ease;
@@ -312,7 +275,7 @@ text-align: center;
 padding: 24px 0;
 color: var(--text-muted);
 font-size: 0.9rem;
-display: none; /* 데이터가 더 이상 없을 때만 활성화 */
+display: none;
 }
 
 .infinite-scroll-loader.active {
@@ -330,21 +293,12 @@ font-size: 0.9rem;
 color: var(--text-muted);
 }
 
-.no-more-news {
-text-align: center;
-padding: 24px 0;
-color: var(--text-muted);
-font-size: 0.9rem;
-}
-
 a, a:link, a:visited, a:hover, a:active {
-color: inherit !important;        /* 부모 요소 글자색(기본 검은/회색) 그대로 따라감 */
-text-decoration: none !important; /* 밑줄 제거 */
+color: inherit !important;
+text-decoration: none !important;
 }
 
-/* ========================================================
-   [추가] 게시판 / 피드백 전용 스타일 (기존 코드에 영향 없음)
-   ======================================================== */
+/* 게시판 / 피드백 전용 스타일 */
 .feedback-floating-btn {
   position: fixed;
   bottom: 30px;
@@ -397,6 +351,9 @@ text-decoration: none !important; /* 밑줄 제거 */
   background-color: var(--card-bg);
   width: 90%;
   max-width: 480px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
   border-radius: 16px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   padding: 24px;
@@ -450,7 +407,7 @@ text-decoration: none !important; /* 밑줄 제거 */
 
 .feedback-form-group textarea {
   resize: vertical;
-  min-height: 90px;
+  min-height: 80px;
 }
 
 .feedback-submit-btn {
@@ -470,6 +427,61 @@ text-decoration: none !important; /* 밑줄 제거 */
   background-color: #1D4ED8;
 }
 
+.feedback-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Firestore 피드백 게시글 목록 영역 스타일 */
+.feedback-list-container {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border-color);
+  overflow-y: auto;
+  max-height: 250px;
+}
+
+.feedback-list-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 12px;
+}
+
+.feedback-item {
+  background-color: #FAFAFA;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.feedback-item-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.feedback-item-author {
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.feedback-item-content {
+  font-size: 0.88rem;
+  color: var(--text-main);
+  white-space: pre-line;
+  line-height: 1.4;
+}
+
+.feedback-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 20px 0;
+}
 </style>
 </head>
 <body>
@@ -500,9 +512,7 @@ text-decoration: none !important; /* 밑줄 제거 */
 </div>
 </div>
 
-<!-- ========================================================
-     [추가] 화면 우측 하단 게시판/피드백 모달 버튼 및 레이어
-     ======================================================== -->
+<!-- 화면 우측 하단 게시판/피드백 모달 버튼 및 레이어 -->
 <button class="feedback-floating-btn" id="openFeedbackBtn" aria-label="피드백 게시판 작성">
   💬 피드백 게시판
 </button>
@@ -522,8 +532,16 @@ text-decoration: none !important; /* 밑줄 제거 */
         <label for="fbContent">피드백 내용</label>
         <textarea id="fbContent" required placeholder="개선 사항이나 원하시는 요청을 자유롭게 남겨주세요."></textarea>
       </div>
-      <button type="submit" class="feedback-submit-btn">피드백 제출하기</button>
+      <button type="submit" class="feedback-submit-btn" id="fbSubmitBtn">피드백 제출하기</button>
     </form>
+
+    <!-- Firestore에서 불러온 게시글 목록 출력 영역 -->
+    <div class="feedback-list-container">
+      <div class="feedback-list-title">📋 최근 작성된 피드백 목록</div>
+      <div id="feedbackList">
+        <div class="feedback-empty">목록을 불러오는 중...</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -562,7 +580,6 @@ async function fetchNewsSummaries(page = 1, append = false) {
 if (isLoading) return;
 isLoading = true;
 
-// 데이터 렌더링 중 감지되어 중복 요청되는 것을 방지하기 위해 일시 해제
 stopInfiniteScroll();
 
 if (!append) {
@@ -600,7 +617,6 @@ infiniteLoader.classList.remove('active');
 noMoreNews.style.display = 'block';
 } else {
 infiniteLoader.classList.remove('active');
-// 가져올 데이터가 남아있을 경우에만 다시 감시 시작
 setupInfiniteScroll();
 }
 } catch (error) {
@@ -664,7 +680,6 @@ let isFetchingDetail = false;
 headerEl.addEventListener('click', async () => {
 card.classList.toggle('active');
 
-// 처음 열 때만 API 호출 (중복 호출 방지)
 if (card.classList.contains('active') && !detailLoaded && !isFetchingDetail) {
 isFetchingDetail = true;
 try {
@@ -682,6 +697,12 @@ detailWrapper.innerHTML = `
               <div class="news-detail-content">
                 <h4>상세 브리핑</h4>
                 <p class="detail-text">${detail.details}</p>
+                <div class="source-section">
+                  <h4>기사 출처</h4>
+                  <div class="source-list">
+                    ${sourcesHtml}
+                  </div>
+                </div>
               </div>
             `;
 detailLoaded = true;
@@ -730,13 +751,10 @@ fetchNewsSummaries(1, false);
 // 초기 실행
 fetchNewsSummaries(1, false);
 
-// ========================================================
-// [추가] 피드백 게시판 모달 제어 전용 스크립트
-// ========================================================
+// 피드백 모달 열기/닫기 기본 제어
 const openFeedbackBtn = document.getElementById('openFeedbackBtn');
 const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
 const feedbackModal = document.getElementById('feedbackModal');
-const feedbackForm = document.getElementById('feedbackForm');
 
 openFeedbackBtn.addEventListener('click', () => {
   feedbackModal.classList.add('open');
@@ -751,14 +769,109 @@ feedbackModal.addEventListener('click', (e) => {
     feedbackModal.classList.remove('open');
   }
 });
+</script>
 
-feedbackForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const name = document.getElementById('fbName').value || '익명';
-  alert(`감사합니다, ${name}님!\n소중한 피드백이 정상적으로 제출되었습니다.`);
-  feedbackForm.reset();
-  feedbackModal.classList.remove('open');
-});
+<!-- Firebase Firestore 연동 스크립트 -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    query, 
+    orderBy, 
+    onSnapshot, 
+    serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+  // 요청하신 firebaseConfig 설정 적용
+  const firebaseConfig = {
+    apiKey: "AIzaSyDGbrQclH1hQhcnRepyjeZcr36hf3mBwSs",
+    authDomain: "erica-e67dd.firebaseapp.com",
+    projectId: "erica-e67dd",
+    storageBucket: "erica-e67dd.firebasestorage.app",
+    messagingSenderId: "40085931746",
+    appId: "1:40085931746:web:bbbf5f0040d8fcc7e7c0bb"
+  };
+
+  // Firebase 초기화
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const feedbackForm = document.getElementById('feedbackForm');
+  const feedbackList = document.getElementById('feedbackList');
+  const fbSubmitBtn = document.getElementById('fbSubmitBtn');
+
+  // Firestore 데이터 불러오기 (최신순 desc)
+  const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
+  
+  onSnapshot(q, (snapshot) => {
+    if (snapshot.empty) {
+      feedbackList.innerHTML = `<div class="feedback-empty">등록된 피드백이 없습니다. 첫 의견을 남겨보세요!</div>`;
+      return;
+    }
+
+    let html = '';
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleString('ko-KR', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      }) : '방금 전';
+
+      html += `
+        <div class="feedback-item">
+          <div class="feedback-item-header">
+            <span class="feedback-item-author">${escapeHtml(data.name || '익명')}</span>
+            <span>${dateStr}</span>
+          </div>
+          <div class="feedback-item-content">${escapeHtml(data.content || '')}</div>
+        </div>
+      `;
+    });
+    feedbackList.innerHTML = html;
+  }, (error) => {
+    console.error("Firestore Read Error:", error);
+    feedbackList.innerHTML = `<div class="feedback-empty" style="color: #EF4444;">목록을 불러오는 중 오류가 발생했습니다. (Firebase 보안 규칙을 확인해주세요)</div>`;
+  });
+
+  // 피드백 등록 이벤트
+  feedbackForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('fbName').value.trim() || '익명';
+    const content = document.getElementById('fbContent').value.trim();
+
+    if (!content) return;
+
+    fbSubmitBtn.disabled = true;
+    fbSubmitBtn.textContent = '등록 중...';
+
+    try {
+      await addDoc(collection(db, "feedbacks"), {
+        name: name,
+        content: content,
+        createdAt: serverTimestamp()
+      });
+
+      alert('피드백이 성공적으로 등록되었습니다.');
+      feedbackForm.reset();
+    } catch (error) {
+      console.error("Firestore Write Error:", error);
+      alert('피드백 등록 실패: ' + error.message);
+    } finally {
+      fbSubmitBtn.disabled = false;
+      fbSubmitBtn.textContent = '피드백 제출하기';
+    }
+  });
+
+  // XSS 방지용 이스케이프
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 </script>
 </body>
 </html>
