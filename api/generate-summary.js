@@ -93,7 +93,7 @@ export default async function handler(req, res) {
     global._generateSummaryInFlight = true;
 
     const apiResponse = await fetchWithRetry(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
