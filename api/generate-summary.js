@@ -14,8 +14,8 @@ export default async function handler(req, res) {
   const itemsPerPage = 4;
   const startIndex = (page - 1) * itemsPerPage;
 
-  // Configurable cooldown (ms). 기본 15초로 설정
-  const COOLDOWN_MS = Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 15_000;
+  // Configurable cooldown (ms). 기본 1초로 설정
+  const COOLDOWN_MS = Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 1_000;
 
   // Helper: fetch with retry and respect Retry-After header
   async function fetchWithRetry(url, opts, maxAttempts = 3) {
