@@ -3,12 +3,13 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Teensight</title>
-    <!-- Tailwind CSS (Source 2 기반) -->
+    <title>실시간 AI 뉴스 브리핑 & 커뮤니티</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <!-- Google Fonts & Material Symbols (Source 2 기반) -->
+    <!-- Google Fonts & Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -17,57 +18,16 @@
                     "colors": {
                         "surface-container-low": "#f4f3f8",
                         "on-primary": "#ffffff",
-                        "primary-fixed": "#e2e2e2",
                         "surface-variant": "#e3e2e7",
-                        "inverse-primary": "#c6c6c6",
                         "surface": "#faf9fe",
-                        "on-primary-fixed": "#1b1b1b",
-                        "on-secondary-container": "#616363",
-                        "outline-variant": "#cfc4c5",
-                        "on-secondary-fixed-variant": "#454747",
-                        "on-secondary": "#ffffff",
                         "background": "#faf9fe",
-                        "tertiary-fixed": "#e2e2e7",
                         "on-surface-variant": "#4c4546",
-                        "on-tertiary-container": "#828488",
-                        "on-tertiary-fixed-variant": "#45474b",
-                        "surface-tint": "#5e5e5e",
-                        "on-primary-fixed-variant": "#474747",
-                        "on-tertiary-fixed": "#1a1c1f",
-                        "secondary": "#5d5f5f",
-                        "error": "#ba1a1a",
-                        "on-error-container": "#93000a",
-                        "surface-bright": "#faf9fe",
-                        "on-background": "#1a1b1f",
-                        "secondary-fixed-dim": "#c6c6c7",
-                        "on-primary-container": "#848484",
-                        "on-secondary-fixed": "#1a1c1c",
-                        "secondary-fixed": "#e2e2e2",
-                        "on-error": "#ffffff",
-                        "primary-fixed-dim": "#c6c6c6",
-                        "surface-container-high": "#e9e7ed",
-                        "tertiary-fixed-dim": "#c6c6cb",
-                        "surface-container": "#eeedf3",
-                        "on-tertiary": "#ffffff",
-                        "outline": "#7e7576",
-                        "tertiary": "#000000",
-                        "secondary-container": "#dfe0e0",
-                        "surface-container-highest": "#e3e2e7",
-                        "surface-dim": "#dad9df",
-                        "inverse-on-surface": "#f1f0f5",
-                        "error-container": "#ffdad6",
-                        "inverse-surface": "#2f3034",
                         "on-surface": "#1a1b1f",
-                        "tertiary-container": "#1a1c1f",
-                        "surface-container-lowest": "#ffffff",
-                        "primary": "#000000",
-                        "primary-container": "#1b1b1b"
+                        "primary": "#000000"
                     },
                     "fontFamily": {
-                        "display-lg": ["Hanken Grotesk"],
-                        "headline-lg": ["Hanken Grotesk"],
                         "body-md": ["Hanken Grotesk"],
-                        "label-sm": ["Hanken Grotesk"]
+                        "display-lg": ["Hanken Grotesk"]
                     }
                 },
             },
@@ -75,28 +35,28 @@
     </script>
     <style>
         .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
         }
         .specular-border {
             border-top: 1px solid rgba(255, 255, 255, 0.8);
             border-left: 1px solid rgba(255, 255, 255, 0.8);
         }
         .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
+            width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(0, 0, 0, 0.15);
             border-radius: 10px;
         }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.3s ease;
         }
         .rotate-180 {
             transform: rotate(180deg);
@@ -105,27 +65,25 @@
 </head>
 <body class="bg-background font-body-md text-on-surface min-h-screen flex flex-col custom-scrollbar antialiased">
 
-    <!-- Top AppBar (Source 2 Style) -->
-    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-3xl border-b border-white/40 px-6 h-16 flex items-center justify-between shadow-sm">
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 w-full bg-surface/80 backdrop-blur-3xl border-b border-black/5 px-6 h-16 flex items-center justify-between shadow-sm">
         <div class="max-w-4xl mx-auto w-full flex items-center justify-between">
-            <h1 class="font-display-lg text-xl sm:text-2xl font-bold tracking-tight text-primary">Teensight</h1>
-            <button id="refreshBtn" class="flex items-center gap-2 bg-white/90 hover:bg-white backdrop-blur-md text-primary px-4 py-2 rounded-full border border-black/10 shadow-sm transition-all active:scale-95 text-xs sm:text-sm font-bold cursor-pointer disabled:opacity-50">
+            <h1 class="font-display-lg text-xl sm:text-2xl font-bold tracking-tight text-primary">실시간 주요 뉴스 브리핑</h1>
+            <button id="refreshBtn" class="flex items-center gap-2 bg-white/90 hover:bg-white text-primary px-4 py-2 rounded-full border border-black/10 shadow-sm transition-all active:scale-95 text-xs sm:text-sm font-bold cursor-pointer disabled:opacity-50">
                 <span class="material-symbols-outlined text-lg">refresh</span>
                 <span>뉴스 새로고침</span>
             </button>
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Content Container -->
     <main class="flex-1 max-w-2xl w-full mx-auto px-4 py-8 space-y-6">
         <div class="text-center space-y-1 mb-6">
             <p class="text-sm text-on-surface-variant/80">Google News RSS에서 실시간 화제 기사를 선별합니다.</p>
         </div>
 
         <!-- News Container -->
-        <div id="newsContainer" class="space-y-4">
-            <!-- 동적 카드가 스크립트로 생성됨 -->
-        </div>
+        <div id="newsContainer" class="space-y-4"></div>
 
         <!-- Infinite Scroll Loader -->
         <div id="infiniteLoader" class="py-8 text-center text-on-surface-variant opacity-0 transition-opacity duration-200">
@@ -139,38 +97,206 @@
         </div>
     </main>
 
-    <!-- Floating Feedback Button (Source 3 기능) -->
-    <button id="openFeedbackBtn" class="fixed bottom-6 right-6 z-40 bg-primary text-on-primary hover:bg-primary/90 px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm transition-all active:scale-95 cursor-pointer" aria-label="피드백 게시판 작성">
-        <span class="material-symbols-outlined text-xl">chat</span>
-        <span>피드백 게시판</span>
+    <!-- Floating Community/Feedback Button -->
+    <button id="openFeedbackBtn" class="fixed bottom-6 right-6 z-40 bg-primary text-white hover:bg-primary/90 px-5 py-3.5 rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm transition-all active:scale-95 cursor-pointer">
+        <span class="material-symbols-outlined text-xl">forum</span>
+        <span>피드백 & 커뮤니티</span>
     </button>
 
-    <!-- Feedback Modal Window (Source 3 기능 & Source 2 디자인) -->
+    <!-- Community & Feedback Modal -->
     <div id="feedbackModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
-        <div class="glass-panel w-full max-w-md bg-white/90 rounded-[32px] p-6 sm:p-8 border border-white/60 shadow-2xl transform scale-95 transition-all duration-300 modal-box">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-primary tracking-tight">의견 작성 및 피드백 게시판</h3>
+        <div class="glass-panel w-full max-w-lg bg-white/95 rounded-[32px] p-6 sm:p-8 border border-white/60 shadow-2xl transform scale-95 transition-all duration-300 modal-box max-h-[90vh] flex flex-col">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-black/10 shrink-0">
+                <div>
+                    <h3 class="text-xl font-bold text-primary tracking-tight">커뮤니티 & 피드백 게시판</h3>
+                    <p class="text-xs text-on-surface-variant/70 mt-0.5">의견을 남기고 실시간으로 사람들과 소통해보세요.</p>
+                </div>
                 <button id="closeFeedbackBtn" class="p-2 text-primary/60 hover:text-primary hover:bg-black/5 rounded-full transition-colors cursor-pointer">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <form id="feedbackForm" class="space-y-4">
-                <div>
-                    <label for="fbName" class="block text-xs font-bold uppercase tracking-wider text-primary/70 mb-2">이름 / 닉네임</label>
-                    <input type="text" id="fbName" placeholder="익명" class="w-full bg-black/[0.04] border border-black/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary placeholder:text-primary/40">
+
+            <div class="overflow-y-auto custom-scrollbar flex-1 py-4 space-y-6">
+                <!-- Submit Form -->
+                <form id="feedbackForm" class="space-y-3 bg-black/[0.02] p-4 rounded-2xl border border-black/5">
+                    <div class="flex gap-2">
+                        <input type="text" id="fbName" placeholder="작성자 / 닉네임 (기본: 익명)" class="w-full bg-white border border-black/10 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-primary placeholder:text-primary/40">
+                    </div>
+                    <div>
+                        <textarea id="fbContent" required rows="3" placeholder="피드백이나 자유로운 의견을 작성해주세요." class="w-full bg-white border border-black/10 rounded-xl p-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-primary placeholder:text-primary/40 resize-none"></textarea>
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-base">send</span>
+                        <span>피드백 등록하기</span>
+                    </button>
+                </form>
+
+                <!-- Feedback Realtime List (Community Feed) -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-primary/70 px-1">실시간 커뮤니티 피드</h4>
+                    <div id="feedbackList" class="space-y-2.5">
+                        <div class="text-center py-8 text-on-surface-variant/60 text-xs">
+                            피드백을 불러오는 중입니다...
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="fbContent" class="block text-xs font-bold uppercase tracking-wider text-primary/70 mb-2">피드백 내용</label>
-                    <textarea id="fbContent" required rows="4" placeholder="개선 사항이나 원하시는 요청을 자유롭게 남겨주세요." class="w-full bg-black/[0.04] border border-black/10 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary placeholder:text-primary/40 resize-none"></textarea>
-                </div>
-                <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-on-primary font-bold py-3.5 rounded-2xl transition-all active:scale-95 shadow-md mt-2 cursor-pointer">
-                    피드백 제출하기
-                </button>
-            </form>
+            </div>
         </div>
     </div>
 
-    <!-- 기능 스크립트 (Source 3 기능 전체 구현) -->
+    <!-- Firebase JS SDK (v10 ES Module) & App Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            query, 
+            orderBy, 
+            onSnapshot, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // =========================================================
+        // [필수 설정] 본인의 Firebase 대시보드에서 복사한 설정값을 넣으세요!
+        // =========================================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Firebase 초기화
+        let db = null;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase 초기화 에러: firebaseConfig 설정을 확인하세요.", e);
+        }
+
+        // DOM 요소
+        const feedbackForm = document.getElementById('feedbackForm');
+        const feedbackList = document.getElementById('feedbackList');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // 1. 파이어베이스 데이터 제출 (피드백 작성)
+        feedbackForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!db) {
+                alert("Firebase 설정(firebaseConfig)이 아직 적용되지 않았습니다.\n코드 내 파이어베이스 정보를 먼저 입력해주세요.");
+                return;
+            }
+
+            const nameInput = document.getElementById('fbName');
+            const contentInput = document.getElementById('fbContent');
+            const name = nameInput.value.trim() || '익명';
+            const content = contentInput.value.trim();
+
+            if (!content) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span>등록 중...</span>`;
+
+            try {
+                // Firestore 'feedbacks' 컬렉션에 새 문서 추가
+                await addDoc(collection(db, "feedbacks"), {
+                    name: name,
+                    content: content,
+                    createdAt: serverTimestamp()
+                });
+
+                contentInput.value = '';
+                nameInput.value = '';
+            } catch (error) {
+                console.error("데이터 저장 실패:", error);
+                alert("피드백 제출 중 오류가 발생했습니다: " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <span class="material-symbols-outlined text-base">send</span>
+                    <span>피드백 등록하기</span>
+                `;
+            }
+        });
+
+        // 2. 파이어베이스 데이터 실시간 열람 (커뮤니티 목록 불러오기)
+        function listenToFeedbacks() {
+            if (!db) {
+                feedbackList.innerHTML = `
+                    <div class="text-center py-6 bg-red-50 text-red-500 rounded-xl text-xs p-4">
+                        Firebase 설정이 필요합니다.<br>코드 상단의 firebaseConfig 값을 설정해주세요.
+                    </div>
+                `;
+                return;
+            }
+
+            // 생성일시(createdAt) 내림차순 최신순 정렬 쿼리
+            const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
+
+            // 실시간 리스너 (onSnapshot)
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    feedbackList.innerHTML = `
+                        <div class="text-center py-8 text-on-surface-variant/60 text-xs bg-black/[0.02] rounded-xl">
+                            아직 등록된 피드백이 없습니다.<br>첫 번째 의견을 남겨보세요!
+                        </div>
+                    `;
+                    return;
+                }
+
+                feedbackList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const dateObj = data.createdAt ? data.createdAt.toDate() : new Date();
+                    const formattedDate = dateObj.toLocaleString('ko-KR', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const item = document.createElement('div');
+                    item.className = 'bg-white p-3.5 rounded-xl border border-black/5 shadow-2xl/5 space-y-1';
+                    item.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-xs text-primary">${escapeHtml(data.name)}</span>
+                            <span class="text-[10px] text-on-surface-variant/50">${formattedDate}</span>
+                        </div>
+                        <p class="text-xs text-on-surface-variant leading-relaxed whitespace-pre-line">${escapeHtml(data.content)}</p>
+                    `;
+                    feedbackList.appendChild(item);
+                });
+            }, (error) => {
+                console.error("데이터 열람 에러:", error);
+                feedbackList.innerHTML = `
+                    <div class="text-center py-6 text-red-500 text-xs">
+                        데이터를 불러오는 중 오류가 발생했습니다.<br>(Firestore 데이터베이스 권한 설정을 확인해주세요)
+                    </div>
+                `;
+            });
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 실시간 조회 시작
+        listenToFeedbacks();
+    </script>
+
+    <!-- 뉴스 기능 및 모달 UI 제어 스크립트 -->
     <script>
         const newsContainer = document.getElementById('newsContainer');
         const refreshBtn = document.getElementById('refreshBtn');
@@ -182,7 +308,6 @@
         let hasMore = true;
         let isLoading = false;
 
-        // 무한 스크롤 Observer 감시 제어
         const observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && hasMore && !isLoading) {
                 fetchNewsSummaries(currentPage + 1, true);
@@ -190,18 +315,13 @@
         }, { rootMargin: '100px' });
 
         function setupInfiniteScroll() {
-            if (infiniteLoader) {
-                observer.observe(infiniteLoader);
-            }
+            if (infiniteLoader) observer.observe(infiniteLoader);
         }
 
         function stopInfiniteScroll() {
-            if (infiniteLoader) {
-                observer.unobserve(infiniteLoader);
-            }
+            if (infiniteLoader) observer.unobserve(infiniteLoader);
         }
 
-        // 뉴스 요약 데이터 요청
         async function fetchNewsSummaries(page = 1, append = false) {
             if (isLoading) return;
             isLoading = true;
@@ -251,7 +371,6 @@
                     showError(error.message);
                 } else {
                     infiniteLoader.classList.remove('opacity-100');
-                    console.error("페이지 로드 실패:", error.message);
                 }
             } finally {
                 isLoading = false;
@@ -261,15 +380,11 @@
 
         function renderNewsCards(newsItems, append = false) {
             if (!Array.isArray(newsItems) || newsItems.length === 0) {
-                if (!append) {
-                    showError("표시할 뉴스 데이터가 없습니다.");
-                }
+                if (!append) showError("표시할 뉴스 데이터가 없습니다.");
                 return;
             }
 
-            if (!append) {
-                newsContainer.innerHTML = '';
-            }
+            if (!append) newsContainer.innerHTML = '';
 
             newsItems.forEach((item) => {
                 const card = document.createElement('div');
@@ -283,7 +398,7 @@
                                 <h2 class="font-display-lg text-lg sm:text-2xl font-bold text-primary tracking-tight leading-snug">${item.title}</h2>
                                 <p class="text-on-surface-variant font-body-md text-sm sm:text-base leading-relaxed">${item.summary}</p>
                             </div>
-                            <button class="toggle-btn p-2 rounded-full hover:bg-black/5 text-primary/60 hover:text-primary transition-all shrink-0 cursor-pointer" aria-label="상세보기 토글">
+                            <button class="toggle-btn p-2 rounded-full hover:bg-black/5 text-primary/60 hover:text-primary transition-all shrink-0 cursor-pointer">
                                 <span class="material-symbols-outlined text-2xl transition-transform duration-300 chevron-icon">keyboard_arrow_down</span>
                             </button>
                         </div>
@@ -381,21 +496,18 @@
             `;
         }
 
-        // 새로고침 이벤트
         refreshBtn.addEventListener('click', () => {
             currentPage = 1;
             hasMore = true;
             fetchNewsSummaries(1, false);
         });
 
-        // 초기 데이터 로딩
         fetchNewsSummaries(1, false);
 
-        // 피드백 게시판 모달 제어 logic (Source 3)
+        // Modal UI Controls
         const openFeedbackBtn = document.getElementById('openFeedbackBtn');
         const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
         const feedbackModal = document.getElementById('feedbackModal');
-        const feedbackForm = document.getElementById('feedbackForm');
 
         const closeModal = () => {
             feedbackModal.classList.add('opacity-0', 'pointer-events-none');
@@ -418,17 +530,7 @@
         closeFeedbackBtn.addEventListener('click', closeModal);
 
         feedbackModal.addEventListener('click', (e) => {
-            if (e.target === feedbackModal) {
-                closeModal();
-            }
-        });
-
-        feedbackForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('fbName').value || '익명';
-            alert(`감사합니다, ${name}님!\n소중한 피드백이 정상적으로 제출되었습니다.`);
-            feedbackForm.reset();
-            closeModal();
+            if (e.target === feedbackModal) closeModal();
         });
     </script>
 </body>
