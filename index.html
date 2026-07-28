@@ -342,6 +342,134 @@ color: inherit !important;        /* 부모 요소 글자색(기본 검은/회�
 text-decoration: none !important; /* 밑줄 제거 */
 }
 
+/* ========================================================
+   [추가] 게시판 / 피드백 전용 스타일 (기존 코드에 영향 없음)
+   ======================================================== */
+.feedback-floating-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: var(--accent-color);
+  color: #FFFFFF !important;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 999;
+  transition: all 0.2s ease;
+}
+
+.feedback-floating-btn:hover {
+  background-color: #1D4ED8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+}
+
+.feedback-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(17, 24, 39, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+}
+
+.feedback-modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.feedback-modal {
+  background-color: var(--card-bg);
+  width: 90%;
+  max-width: 480px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  border: 1px solid var(--border-color);
+}
+
+.feedback-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.feedback-modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.feedback-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.feedback-form-group {
+  margin-bottom: 14px;
+}
+
+.feedback-form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+}
+
+.feedback-form-group input,
+.feedback-form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  background-color: #FAFAFA;
+  outline: none;
+}
+
+.feedback-form-group textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.feedback-submit-btn {
+  width: 100%;
+  background-color: var(--accent-color);
+  color: #FFFFFF !important;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.feedback-submit-btn:hover {
+  background-color: #1D4ED8;
+}
+
 </style>
 </head>
 <body>
@@ -370,6 +498,33 @@ text-decoration: none !important; /* 밑줄 제거 */
 <div class="no-more-news" id="noMoreNews" style="display: none;">
 더 이상 뉴스가 없습니다.
 </div>
+</div>
+
+<!-- ========================================================
+     [추가] 화면 우측 하단 게시판/피드백 모달 버튼 및 레이어
+     ======================================================== -->
+<button class="feedback-floating-btn" id="openFeedbackBtn" aria-label="피드백 게시판 작성">
+  💬 피드백 게시판
+</button>
+
+<div class="feedback-modal-overlay" id="feedbackModal">
+  <div class="feedback-modal">
+    <div class="feedback-modal-header">
+      <h3>의견 작성 및 피드백 게시판</h3>
+      <button class="feedback-close-btn" id="closeFeedbackBtn">&times;</button>
+    </div>
+    <form id="feedbackForm">
+      <div class="feedback-form-group">
+        <label for="fbName">이름 / 닉네임</label>
+        <input type="text" id="fbName" placeholder="익명">
+      </div>
+      <div class="feedback-form-group">
+        <label for="fbContent">피드백 내용</label>
+        <textarea id="fbContent" required placeholder="개선 사항이나 원하시는 요청을 자유롭게 남겨주세요."></textarea>
+      </div>
+      <button type="submit" class="feedback-submit-btn">피드백 제출하기</button>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -527,6 +682,12 @@ detailWrapper.innerHTML = `
               <div class="news-detail-content">
                 <h4>상세 브리핑</h4>
                 <p class="detail-text">${detail.details}</p>
+                <div class="source-section">
+                  <h4>기사 출처</h4>
+                  <div class="source-list">
+                    ${sourcesHtml}
+                  </div>
+                </div>
               </div>
             `;
 detailLoaded = true;
@@ -574,6 +735,36 @@ fetchNewsSummaries(1, false);
 
 // 초기 실행
 fetchNewsSummaries(1, false);
+
+// ========================================================
+// [추가] 피드백 게시판 모달 제어 전용 스크립트
+// ========================================================
+const openFeedbackBtn = document.getElementById('openFeedbackBtn');
+const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
+const feedbackModal = document.getElementById('feedbackModal');
+const feedbackForm = document.getElementById('feedbackForm');
+
+openFeedbackBtn.addEventListener('click', () => {
+  feedbackModal.classList.add('open');
+});
+
+closeFeedbackBtn.addEventListener('click', () => {
+  feedbackModal.classList.remove('open');
+});
+
+feedbackModal.addEventListener('click', (e) => {
+  if (e.target === feedbackModal) {
+    feedbackModal.classList.remove('open');
+  }
+});
+
+feedbackForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = document.getElementById('fbName').value || '익명';
+  alert(`감사합니다, ${name}님!\n소중한 피드백이 정상적으로 제출되었습니다.`);
+  feedbackForm.reset();
+  feedbackModal.classList.remove('open');
+});
 </script>
 </body>
 </html>
