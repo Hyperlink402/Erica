@@ -183,7 +183,7 @@
     .news-detail-wrapper {
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+      transition: max-height 0.35s ease-in-out;
       background-color: #FAFAFA;
       border-top: 0px solid var(--border-color);
     }
@@ -191,7 +191,6 @@
     .news-card.active .news-detail-wrapper {
       max-height: 1000px;
       border-top-width: 1px;
-      transition: max-height 0.3s cubic-bezier(1, 0, 1, 0);
     }
 
     .news-detail-content {
@@ -353,9 +352,33 @@
     let hasMore = true;
     let isLoading = false;
 
+    // 무한 스크롤 Observer 감시 제어
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !isLoading) {
+        fetchNewsSummaries(currentPage + 1, true);
+      }
+    }, { rootMargin: '100px' });
+
+    function setupInfiniteScroll() {
+      if (infiniteLoader) {
+        observer.observe(infiniteLoader);
+      }
+    }
+
+    function stopInfiniteScroll() {
+      if (infiniteLoader) {
+        observer.unobserve(infiniteLoader);
+      }
+    }
+
     // 뉴스 요약 로드
     async function fetchNewsSummaries(page = 1, append = false) {
+      if (isLoading) return;
       isLoading = true;
+
+      // 데이터 렌더링 중 감지되어 중복 요청되는 것을 방지하기 위해 일시 해제
+      stopInfiniteScroll();
+
       if (!append) {
         infiniteLoader.classList.remove('active');
         noMoreNews.style.display = 'none';
@@ -377,12 +400,12 @@
         if (!append) {
           newsData = data.items || [];
           currentPage = data.page || 1;
-          hasMore = data.hasMore || false;
+          hasMore = data.hasMore ?? false;
           renderNewsCards(newsData, false);
         } else {
           newsData = [...newsData, ...(data.items || [])];
           currentPage = data.page || 1;
-          hasMore = data.hasMore || false;
+          hasMore = data.hasMore ?? false;
           renderNewsCards(data.items || [], true);
         }
 
@@ -391,6 +414,8 @@
           noMoreNews.style.display = 'block';
         } else {
           infiniteLoader.classList.remove('active');
+          // 가져올 데이터가 남아있을 경우에만 다시 감시 시작
+          setupInfiniteScroll();
         }
       } catch (error) {
         console.error("Error:", error);
@@ -448,12 +473,14 @@
         const headerEl = card.querySelector('.news-header');
         const detailWrapper = card.querySelector('.news-detail-wrapper');
         let detailLoaded = false;
+        let isFetchingDetail = false;
 
         headerEl.addEventListener('click', async () => {
           card.classList.toggle('active');
 
-          // 처음 열 때만 API 호출
-          if (card.classList.contains('active') && !detailLoaded) {
+          // 처음 열 때만 API 호출 (중복 호출 방지)
+          if (card.classList.contains('active') && !detailLoaded && !isFetchingDetail) {
+            isFetchingDetail = true;
             try {
               const response = await fetch(`/api/generate-detail?id=${item.id}&title=${encodeURIComponent(item.title)}`);
               if (!response.ok) {
@@ -487,6 +514,8 @@
                   <p>${error.message || '상세 정보를 불러올 수 없습니다.'}</p>
                 </div>
               `;
+            } finally {
+              isFetchingDetail = false;
             }
           }
         });
@@ -513,18 +542,7 @@
       `;
     }
 
-    // 무한 스크롤 감지 (Intersection Observer)
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore && !isLoading) {
-        fetchNewsSummaries(currentPage + 1, true);
-      }
-    }, { rootMargin: '100px' });
-
-    // Intersection Observer 시작 (infiniteLoader를 감시)
-    function setupInfiniteScroll() {
-      observer.observe(infiniteLoader);
-    }
-
+    // 새로고침 버튼 이벤트
     refreshBtn.addEventListener('click', () => {
       currentPage = 1;
       hasMore = true;
@@ -533,7 +551,6 @@
     
     // 초기 실행
     fetchNewsSummaries(1, false);
-    setupInfiniteScroll();
   </script>
 </body>
 </html>
