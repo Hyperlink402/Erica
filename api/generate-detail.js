@@ -12,18 +12,10 @@ export default async function handler(req, res) {
     });
   }
 
-  const promptText = `
-    뉴스 제목: "${title}"
-    이 기사의 구체적인 맥락 설명과 출처를 조사해줘.
-    결과는 설명 없이 오직 아래 JSON 형식으로만 응답해줘.
-
-    {
-      "details": "구체적인 맥락 설명 (2~3문장)",
-      "sources": [
-        { "name": "언론사명", "url": "원문기사URL" }
-      ]
-    }
-  `;
+  const promptText = `뉴스 제목: "${title}"
+응답은 오직 JSON(한국어) 형태만 반환하세요:
+{"details":"한국어, 2~3문장","sources":[{"name":"언론사명","url":"원문기사URL"}]}
+출처 없으면 "sources":[]로 반환하세요. 다른 텍스트 금지.`;
 
   // cooldown and in-flight safety defaults
   const COOLDOWN_MS = Number(process.env.GENERATE_DETAIL_COOLDOWN_MS) || Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 15000;
@@ -67,8 +59,10 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }]
-          // tools removed to avoid unsupported/permission issues
+          contents: [{ parts: [{ text: promptText }] }],
+          temperature: 0.0,
+          maxOutputTokens: 160,
+          candidateCount: 1
         })
       }
     );
