@@ -119,20 +119,6 @@ export default async function handler(req, res) {
 
   const now = Date.now();
 
-  // If another request is currently in-flight (same instance), immediately return a friendly 429
-  if (global._generateSummaryInFlight) {
-    const retryAfterSeconds = 5;
-    res.setHeader('Retry-After', String(retryAfterSeconds));
-    return res.status(429).json({ error: '다른 요청이 처리 중입니다. 잠시 후 다시 시도해 주세요.' });
-  }
-
-  // Enforce cooldown since last successful (or rate-limited) request
-  if (now - global._generateSummaryLastRequestAt < COOLDOWN_MS) {
-    const retryAfterSec = Math.ceil((COOLDOWN_MS - (now - global._generateSummaryLastRequestAt)) / 1000);
-    res.setHeader('Retry-After', String(retryAfterSec));
-    return res.status(429).json({ error: `요청이 너무 잦습니다. ${retryAfterSec}초 후에 다시 시도해 주세요.` });
-  }
-
   try {
     // mark in-flight to prevent concurrent API calls in this instance
     global._generateSummaryInFlight = true;
