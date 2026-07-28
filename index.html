@@ -519,11 +519,11 @@ const errData = await response.json().catch(() => ({}));
 throw new Error(errData.error || '상세 정보 로드 실패');
 }
 
+const detail = await response.json();
+
 const sourcesHtml = detail.sources && detail.sources.length > 0
 ? detail.sources.map(src => `<a href="${src.url}" target="_blank" rel="noopener noreferrer" class="source-chip">🔗 ${src.name}</a>`).join('')
 : '<span style="font-size:0.8rem; color:var(--text-muted);">출처 정보 없음</span>';
-
-const detail = await response.json();
 
 detailWrapper.innerHTML = `
               <div class="news-detail-content">
