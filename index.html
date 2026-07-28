@@ -283,6 +283,35 @@
       font-size: 0.85rem;
       color: var(--text-muted);
     }
+
+    /* 무한 스크롤 로딩 표시 */
+    .infinite-scroll-loader {
+      text-align: center;
+      padding: 24px 0;
+      display: none;
+    }
+
+    .infinite-scroll-loader.active {
+      display: block;
+    }
+
+    .infinite-scroll-loader .spinner {
+      width: 24px;
+      height: 24px;
+      margin: 0 auto 8px;
+    }
+
+    .infinite-scroll-loader p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .no-more-news {
+      text-align: center;
+      padding: 24px 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -290,7 +319,7 @@
   <div class="container">
     <header>
       <h1>실시간 주요 뉴스 브리핑</h1>
-      <p>Gemini AI가 실시간 화제 기사를 선별 및 요약합니다.</p>
+      <p>Google News RSS에서 실시간 화제 기사를 선별합니다.</p>
     </header>
 
     <div class="controls">
@@ -302,41 +331,91 @@
     <div id="newsContainer" class="news-list">
       <!-- 뉴스 카드가 스크립트에 의해 여기에 동적으로 생성됩니다. -->
     </div>
+
+    <div class="infinite-scroll-loader" id="infiniteLoader">
+      <div class="spinner"></div>
+      <p>더 많은 뉴스를 불러오는 중...</p>
+    </div>
+
+    <div class="no-more-news" id="noMoreNews" style="display: none;">
+      더 이상 뉴스가 없습니다.
+    </div>
   </div>
 
   <script>
     const newsContainer = document.getElementById('newsContainer');
     const refreshBtn = document.getElementById('refreshBtn');
+    const infiniteLoader = document.getElementById('infiniteLoader');
+    const noMoreNews = document.getElementById('noMoreNews');
+    
     let newsData = [];
+    let currentPage = 1;
+    let hasMore = true;
+    let isLoading = false;
 
-    // 요약만 먼저 로드
-    async function fetchNewsSummaries() {
-      showLoading();
+    // 뉴스 요약 로드
+    async function fetchNewsSummaries(page = 1, append = false) {
+      isLoading = true;
+      if (!append) {
+        infiniteLoader.classList.remove('active');
+        noMoreNews.style.display = 'none';
+        showLoading();
+      } else {
+        infiniteLoader.classList.add('active');
+      }
       refreshBtn.disabled = true;
 
       try {
-        const response = await fetch('/api/generate-summary');
+        const response = await fetch(`/api/generate-summary?page=${page}`);
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
           throw new Error(errData.error || `서버 에러가 발생했습니다. (Status: ${response.status})`);
         }
         
-        newsData = await response.json();
-        renderNewsCards(newsData);
+        const data = await response.json();
+        
+        if (!append) {
+          newsData = data.items || [];
+          currentPage = data.page || 1;
+          hasMore = data.hasMore || false;
+          renderNewsCards(newsData, false);
+        } else {
+          newsData = [...newsData, ...(data.items || [])];
+          currentPage = data.page || 1;
+          hasMore = data.hasMore || false;
+          renderNewsCards(data.items || [], true);
+        }
+
+        if (!hasMore) {
+          infiniteLoader.classList.remove('active');
+          noMoreNews.style.display = 'block';
+        } else {
+          infiniteLoader.classList.remove('active');
+        }
       } catch (error) {
         console.error("Error:", error);
-        showError(error.message);
+        if (!append) {
+          showError(error.message);
+        } else {
+          infiniteLoader.classList.remove('active');
+          console.error("페이지 로드 실패:", error.message);
+        }
       } finally {
+        isLoading = false;
         refreshBtn.disabled = false;
       }
     }
 
-    function renderNewsCards(newsItems) {
-      newsContainer.innerHTML = '';
-
+    function renderNewsCards(newsItems, append = false) {
       if (!Array.isArray(newsItems) || newsItems.length === 0) {
-        showError("표시할 뉴스 데이터가 없습니다.");
+        if (!append) {
+          showError("표시할 뉴스 데이터가 없습니다.");
+        }
         return;
+      }
+
+      if (!append) {
+        newsContainer.innerHTML = '';
       }
 
       newsItems.forEach((item) => {
@@ -429,15 +508,32 @@
       newsContainer.innerHTML = `
         <div class="loading-state">
           <p style="color: #EF4444; font-weight: 500;">${message}</p>
-          <p style="color: #9CA3AF; font-size: 0.85rem; margin-top: 8px;">Vercel의 Project Settings > Environment Variables에서 <b>GEMINI_API_KEY</b> 환경변수를 확인하세요.</p>
+          <p style="color: #9CA3AF; font-size: 0.85rem; margin-top: 8px;">문제가 계속되면 개발자 콘솔을 확인하세요.</p>
         </div>
       `;
     }
 
-    refreshBtn.addEventListener('click', fetchNewsSummaries);
+    // 무한 스크롤 감지 (Intersection Observer)
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !isLoading) {
+        fetchNewsSummaries(currentPage + 1, true);
+      }
+    }, { rootMargin: '100px' });
+
+    // Intersection Observer 시작 (infiniteLoader를 감시)
+    function setupInfiniteScroll() {
+      observer.observe(infiniteLoader);
+    }
+
+    refreshBtn.addEventListener('click', () => {
+      currentPage = 1;
+      hasMore = true;
+      fetchNewsSummaries(1, false);
+    });
     
     // 초기 실행
-    fetchNewsSummaries();
+    fetchNewsSummaries(1, false);
+    setupInfiniteScroll();
   </script>
 </body>
 </html>
