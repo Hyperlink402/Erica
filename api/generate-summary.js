@@ -3,8 +3,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Get search query from request (body or query). Provide a sensible default if missing.
+  // Get search query and page from request
   let searchQuery = (req.method === 'GET' ? req.query.query : req.body?.query) || '';
+  let page = parseInt(req.method === 'GET' ? req.query.page : req.body?.page) || 1;
+  
+  // Limit page to prevent excessive requests
+  if (page < 1) page = 1;
+  if (page > 10) page = 10;
+
+  const itemsPerPage = 4;
+  const startIndex = (page - 1) * itemsPerPage;
 
   // Configurable cooldown (ms). 기본 15초로 설정
   const COOLDOWN_MS = Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 15_000;
@@ -59,7 +67,7 @@ export default async function handler(req, res) {
   }
 
   // Helper: Parse RSS XML to JSON
-  function parseRssToJson(rssXml) {
+  function parseRssToJson(rssXml, limit = 100) {
     try {
       // Extract items from RSS feed
       const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -67,16 +75,16 @@ export default async function handler(req, res) {
       let match;
       let id = 1;
 
-      while ((match = itemRegex.exec(rssXml)) !== null) {
+      while ((match = itemRegex.exec(rssXml)) !== null && id <= limit) {
         const itemContent = match[1];
         
         // Extract title
         const titleMatch = itemContent.match(/<title>([\s\S]*?)<\/title>/);
-        const title = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"') : '';
+        const title = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'") : '';
         
         // Extract description
         const descMatch = itemContent.match(/<description>([\s\S]*?)<\/description>/);
-        const summary = descMatch ? descMatch[1].replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"') : '';
+        const summary = descMatch ? descMatch[1].replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'") : '';
         
         // Extract link
         const linkMatch = itemContent.match(/<link>([\s\S]*?)<\/link>/);
@@ -88,15 +96,14 @@ export default async function handler(req, res) {
 
         if (title && link) {
           items.push({
-            id: id++,
+            id: id,
             title: title,
             summary: summary,
             link: link,
             pubDate: pubDate
           });
+          id++;
         }
-
-        if (items.length >= 4) break;
       }
 
       return items;
@@ -161,7 +168,7 @@ export default async function handler(req, res) {
       return res.status(status).json({ error: `Google News API error (${status}): ${apiResponse.bodyText || apiResponse.rawBodyText}` });
     }
 
-    // Parse RSS feed
+    // Parse RSS feed - fetch more items for pagination
     const rssXml = apiResponse.rawBodyText;
     
     if (!rssXml) {
@@ -171,19 +178,34 @@ export default async function handler(req, res) {
       });
     }
 
-    const newsItems = parseRssToJson(rssXml);
+    const allNewsItems = parseRssToJson(rssXml, 100); // Parse up to 100 items
 
-    if (newsItems.length === 0) {
+    if (allNewsItems.length === 0) {
       global._generateSummaryLastRequestAt = Date.now();
       return res.status(500).json({
         error: 'Google News API로부터 뉴스 항목을 받지 못했습니다.'
       });
     }
 
+    // Pagination logic
+    const paginatedItems = allNewsItems.slice(startIndex, startIndex + itemsPerPage);
+    const hasMore = startIndex + itemsPerPage < allNewsItems.length;
+
+    // Re-index items for this page
+    const newsItems = paginatedItems.map((item, index) => ({
+      ...item,
+      id: startIndex + index + 1
+    }));
+
     // successful response: record last success time (enable cooldown)
     global._generateSummaryLastRequestAt = Date.now();
 
-    return res.status(200).json(newsItems);
+    return res.status(200).json({
+      items: newsItems,
+      page: page,
+      hasMore: hasMore,
+      total: allNewsItems.length
+    });
   } catch (error) {
     console.error('Serverless Function Error:', error);
 
