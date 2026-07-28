@@ -101,13 +101,20 @@ gap: 16px;
 }
 
 .news-card {
-background-color: var(--card-bg);
-border: 1px solid var(--border-color);
-border-radius: 12px;
-box-shadow: var(--shadow-sm);
-overflow: hidden;
-transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      padding: 24px 32px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+
+  /* === 포커 카드 비율 고정 === */
+  width: 100%;
+  max-width: 300px;         /* 카드가 너무 거대해지지 않게 적절한 너비 제한 */
+  aspect-ratio: 2.5 / 3.5;  /* 포커 카드 비율 (가로 2.5 : 세로 3.5) */
+
+  /* 내부 레이아웃 및 스크롤 설정 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;         /* 카드 테두리를 벗어나는 내용 감추기 */
 }
 
 .news-card:hover {
@@ -185,11 +192,18 @@ transform: rotate(180deg);
 
 /* 상세 내용 및 출처 영역 (토글 대상) */
 .news-detail-wrapper {
-max-height: 0;
-overflow: hidden;
-transition: max-height 0.35s ease-in-out;
-background-color: #FFFFFF;
-border-top: 0px solid var(--border-color);
+  flex: 1;                 /* 남은 공간을 채움 */
+  overflow-y: auto;        /* 내용이 포커 카드 높이를 넘어가면 스크롤바 생성 */
+  max-height: none;        /* 기존 max-height 제한 해제 */
+}
+
+/* 스크롤바 모양을 얇고 깔끔하게 정리 (크롬, 사파리, 엣지) */
+.news-detail-wrapper::-webkit-scrollbar {
+  width: 4px;
+}
+.news-detail-wrapper::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
 }
 
 .news-card.active .news-detail-wrapper {
