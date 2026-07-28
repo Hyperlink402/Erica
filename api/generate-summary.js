@@ -3,18 +3,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  // Naver API credentials
+  const naverClientId = process.env.NAVER_CLIENT_ID;
+  const naverClientSecret = process.env.NAVER_CLIENT_SECRET;
+  
+  if (!naverClientId || !naverClientSecret) {
     return res.status(500).json({ 
-      error: 'GEMINI_API_KEY 환경변수가 설정되지 않았습니다. Vercel 환경변수 설정을 확인해 주세요.' 
+      error: 'NAVER_CLIENT_ID 또는 NAVER_CLIENT_SECRET 환경변수가 설정되지 않았습니다. Vercel 환경변수 설정을 확인해 주세요.' 
     });
   }
 
-  // Get prompt from request (body or query). Provide a sensible default if missing.
-  let promptText = (req.method === 'GET' ? req.query.prompt : req.body?.prompt) || '';
-  if (!promptText) {
-    promptText = `한국 주요 뉴스 4건을 간단한 JSON로 출력하세요:[{"id":1,"title":"","summary":""}]`;
-  }
+  // Get search query from request (body or query). Provide a sensible default if missing.
+  let searchQuery = (req.method === 'GET' ? req.query.query : req.body?.query) || '한국 뉴스';
 
   // Configurable cooldown (ms). 기본 15초로 설정
   const COOLDOWN_MS = Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 15_000;
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       const headers = resp.headers;
       const bodyText = await resp.text().catch(() => null);
       const retryAfterHeader = headers.get ? headers.get('retry-after') : null;
-      console.info(`Gemini attempt=${attempt} status=${resp.status} retry-after=${retryAfterHeader}`);
+      console.info(`Naver News API attempt=${attempt} status=${resp.status} retry-after=${retryAfterHeader}`);
 
       if (resp.ok) {
         return { ok: true, rawBodyText: bodyText, headers };
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
       if (resp.status === 429) {
         global._generateSummaryLastRequestAt = Date.now();
         const waitMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : Math.min(1000 * 2 ** attempt, 5000);
-        console.warn('Gemini 429 body:', bodyText);
+        console.warn('Naver 429 body:', bodyText);
         if (attempt >= maxAttempts) {
           return { ok: false, status: resp.status, bodyText, headers };
         }
@@ -89,17 +89,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    // mark in-flight to prevent concurrent Gemini calls in this instance
+    // mark in-flight to prevent concurrent API calls in this instance
     global._generateSummaryInFlight = true;
 
+    // Naver News API 요청
+    const naverApiUrl = `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(searchQuery)}&display=4&sort=date`;
+
     const apiResponse = await fetchWithRetry(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      naverApiUrl,
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }]
-        })
+        method: 'GET',
+        headers: {
+          'X-Naver-Client-Id': naverClientId,
+          'X-Naver-Client-Secret': naverClientSecret
+        }
       }
     );
 
@@ -113,7 +116,7 @@ export default async function handler(req, res) {
       global._generateSummaryLastRequestAt = Date.now();
 
       const status = apiResponse.status || 429;
-      return res.status(status).json({ error: `Gemini API Rate Limit or error (${status}): ${apiResponse.bodyText || apiResponse.rawBodyText}` });
+      return res.status(status).json({ error: `Naver API Rate Limit or error (${status}): ${apiResponse.bodyText || apiResponse.rawBodyText}` });
     }
 
     // success: parse json
@@ -123,22 +126,26 @@ export default async function handler(req, res) {
       data = JSON.parse(rawBodyText);
     } catch (e) {
       global._generateSummaryLastRequestAt = Date.now();
-      console.error('Failed to parse Gemini response JSON', e, rawBodyText);
-      return res.status(500).json({ error: 'Gemini 응답을 파싱할 수 없습니다.', rawText: rawBodyText });
+      console.error('Failed to parse Naver response JSON', e, rawBodyText);
+      return res.status(500).json({ error: 'Naver API 응답을 파싱할 수 없습니다.', rawText: rawBodyText });
     }
 
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    const jsonMatch = rawText ? rawText.match(/\[[\s\S]*\]/) : null;
-    if (!jsonMatch) {
-      // record last request time to avoid immediate retry loops
+    // Transform Naver API response to desired format
+    if (!data.items || data.items.length === 0) {
       global._generateSummaryLastRequestAt = Date.now();
       return res.status(500).json({
-        error: 'Gemini API로부터 올바른 JSON 형식의 응답을 받지 못했습니다.',
-        rawText
+        error: 'Naver API로부터 뉴스 항목을 받지 못했습니다.',
+        rawData: data
       });
     }
 
-    const newsItems = JSON.parse(jsonMatch[0]);
+    const newsItems = data.items.map((item, index) => ({
+      id: index + 1,
+      title: item.title.replace(/<[^>]*>/g, ''),
+      summary: item.description.replace(/<[^>]*>/g, ''),
+      link: item.link,
+      pubDate: item.pubDate
+    }));
 
     // successful response: record last success time (enable cooldown)
     global._generateSummaryLastRequestAt = Date.now();
