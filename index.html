@@ -284,11 +284,27 @@
     }
 
     /* 무한 스크롤 로딩 표시 */
-    .infinite-scroll-loader {
-      text-align: center;
-      padding: 24px 0;
-      display: none;
-    }
+ infinite-scroll-loader {
+    text-align: center;
+    padding: 24px 0;
+    min-height: 50px; /* 감지 영역 높이 확보 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+}
+
+.infinite-scroll-loader.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.no-more-news {
+  text-align: center;
+  padding: 24px 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  display: none; /* 데이터가 더 이상 없을 때만 활성화 */
+}
 
     .infinite-scroll-loader.active {
       display: block;
