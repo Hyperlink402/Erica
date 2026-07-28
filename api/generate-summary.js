@@ -10,7 +10,53 @@ export default async function handler(req, res) {
     });
   }
 
-  const promptText = `한국 주요 뉴스 4건을 JSON 형식으로:[{"id":1,"category":"","title":"","summary":"","details":"","sources":[{"name":"","url":""}]}]`;
+  // ------------------ Korean tokenizer (lightweight) ------------------
+  // Purpose: approximate tokenization for Korean and mixed text without
+  // adding external dependencies. This is an estimate used to warn or
+  // shorten prompts to avoid hitting model token limits.
+  function koreanTokenizer(text) {
+    if (!text) return [];
+    // Match Hangul runs, Latin words, numbers, or single non-space chars.
+    // Uses Unicode property escapes; Node.js supports this in modern versions.
+    try {
+      return text.match(/\p{Script=Hangul}+|\p{Letter}+|\d+|[^\s]/gu) || [];
+    } catch (e) {
+      // Fallback if Unicode property escapes are not supported
+      return text.split(/\s+/).flatMap(t => t.split(/(?=[^\p{L}\p{N}])|(?<=[^\p{L}\p{N}])/u)).filter(Boolean);
+    }
+  }
+
+  function estimateTokensByChars(text) {
+    // Conservative fallback estimate: 1 token ~= 2 characters for Korean-heavy text.
+    // This provides a cheap estimate if tokenizer isn't precise enough.
+    if (!text) return 0;
+    const length = text.length;
+    return Math.ceil(length / 2);
+  }
+
+  function estimateTokens(text) {
+    const tokens = koreanTokenizer(text);
+    // Use tokenizer length when available, otherwise fallback to char-based estimate
+    if (tokens && tokens.length > 0) return tokens.length;
+    return estimateTokensByChars(text);
+  }
+  // --------------------------------------------------------------------
+
+  let promptText = `한국 주요 뉴스 4건을 JSON 형식으로:[{"id":1,"category":"","title":"","summary":"","details":"","sources":[{"name":"","url":""}]}]`;
+
+  // check estimated tokens for prompt and trim if too large
+  const PROMPT_TOKEN_WARN = Number(process.env.PROMPT_TOKEN_WARN) || 800; // warn threshold
+  const PROMPT_TOKEN_MAX = Number(process.env.PROMPT_TOKEN_MAX) || 1200; // hard max for safety
+  const estimated = estimateTokens(promptText);
+  if (estimated > PROMPT_TOKEN_WARN) {
+    console.info(`generate-summary: prompt estimated tokens=${estimated} (exceeds warn ${PROMPT_TOKEN_WARN})`);
+  }
+
+  if (estimated > PROMPT_TOKEN_MAX) {
+    // fallback to the shortest possible prompt to reduce tokens
+    console.warn(`generate-summary: trimming prompt from estimated ${estimated} tokens to safe minimal prompt`);
+    promptText = `한국 주요 뉴스 4건을 간단한 JSON로 출력하세요:[{"id":1,"title":"","summary":""}]`;
+  }
 
   // Configurable cooldown (ms). 기본 15초로 설정되어 있으나 필요 시 환경변수로 조정 가능.
   const COOLDOWN_MS = Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 15_000;
