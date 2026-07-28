@@ -26,3 +26,12 @@ Gemini API의 Google Search Grounding 기능과 Vercel Serverless Function을 �
 
 3. **배포 완성**:
    - **Deploy** 버튼을 누르면 배포가 진행되며, 생성된 URL을 통해 바로 접속하실 수 있습니다.
+##data base키
+const firebaseConfig = {
+  apiKey: "AIzaSyDGbrQclH1hQhcnRepyjeZcr36hf3mBwSs",
+  authDomain: "erica-e67dd.firebaseapp.com",
+  projectId: "erica-e67dd",
+  storageBucket: "erica-e67dd.firebasestorage.app",
+  messagingSenderId: "40085931746",
+  appId: "1:40085931746:web:bbbf5f0040d8fcc7e7c0bb"
+};
