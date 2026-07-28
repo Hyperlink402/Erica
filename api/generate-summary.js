@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const promptText = `24시간 이내 한국 주요 뉴스 4건을 JSON 형식으로:[{"id":1,"category":"","title":"","summary":"","details":"","sources":[{"name":"","url":""}]}]`;
+  const promptText = `한국 주요 뉴스 4건을 JSON 형식으로:[{"id":1,"category":"","title":"","summary":"","details":"","sources":[{"name":"","url":""}]}]`;
 
   // Configurable cooldown (ms). 기본 15초로 설정되어 있으나 필요 시 환경변수로 조정 가능.
   const COOLDOWN_MS = Number(process.env.GENERATE_SUMMARY_COOLDOWN_MS) || 15_000;
